@@ -33,7 +33,7 @@ public class FilterAgent extends EPAgent{
         //this._filter = filter;
         this._info=info;
         this._type ="FilterAgent";
-        this._receiver = new ChannelReceiver(this, true);
+        this._receiver = new TopicReceiver(this);
         inputTerminal = new IOTerminal(IDinputTerminal,"input channel "+_type, _receiver);
         outputTerminal = new IOTerminal(IDoutputTerminal,"output channel "+_type);   
     }    

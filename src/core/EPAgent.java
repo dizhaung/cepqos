@@ -16,7 +16,7 @@ import java.util.Queue;
 public abstract class EPAgent extends Thread {
 
     protected String _type;
-    protected ChannelReceiver _receiver;
+    protected TopicReceiver _receiver;
     //private String identifier;
     protected String _info;
     protected Queue<EventBean> _selectedEvents;

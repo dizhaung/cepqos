@@ -30,7 +30,7 @@ public class PubSubService {
      * @param topic the topic to publish to
      *
      */
-    public void publish(Object evt, String topic) {
+    public boolean publish(Object evt, String topic) {
         EventBus eBus;
         if (!_topicBus.containsKey(topic)) {
             eBus = new EventBus();
@@ -38,8 +38,10 @@ public class PubSubService {
         } else {
             eBus = _topicBus.get(topic);
         }
-
-        eBus.post(evt);
+        if (evt != null) {
+            eBus.post(evt);
+        }
+        return true;
     }
 
     /**
@@ -48,15 +50,16 @@ public class PubSubService {
      * @param subscriber
      * @param topic
      */
-    public boolean subscribe(Subscriber subscriber, String topic) {
-
+    public void subscribe(Subscriber subscriber, String topic) {
+        EventBus eBus;
         if (!_topicBus.containsKey(topic)) {
-            return false;
+            eBus = new EventBus();
+            _topicBus.put(topic, eBus);
         }
-        EventBus eBus = _topicBus.get(topic);
+        else {
+            eBus = _topicBus.get(topic);   
+        }
         eBus.register(subscriber);
-        return true;
-
     }
 
     public static PubSubService getInstance() {

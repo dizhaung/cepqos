@@ -7,6 +7,7 @@ package test;
 import core.EqualFilter;
 import core.FilterAgent;
 import core.LessThanFilter;
+import core.pubsub.Relayer;
 import event.EventTypeRepository;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -29,6 +30,7 @@ public class EPInAction {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        Relayer.getInstance();
         EventTypeRepository.getInstance().dump();
         FilterAgent filterA = new FilterAgent("LessThan-25-Only", "Test", "outputfilter");        
         

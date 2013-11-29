@@ -32,6 +32,7 @@ public class Relayer {
     private Relayer() {
         try {
             channel = new JChannel(props);
+            channel.setDiscardOwnMessages(true);
             disp = new RpcDispatcher(channel, this);
             call = new MethodCall(getClass().getMethod("publish", EventBean.class, String.class));
             opts = new RequestOptions(ResponseMode.GET_NONE, DELAY);
@@ -41,13 +42,13 @@ public class Relayer {
         }
     }
 
-    public void publish(EventBean evt, String topic) {
-        PubSubService.getInstance().publish(evt, topic);
+    public boolean publish(EventBean evt, String topic) {
+        return PubSubService.getInstance().publish(evt, topic);
     }
 
     public void callPublish(EventBean evt, String topic) throws Exception {
         call.setArgs(evt, topic);
-        disp.callRemoteMethods(null, call, opts);
+         disp.callRemoteMethods(null, call, opts);
         //System.out.println("Responses: " + rsp_list);
     }
     

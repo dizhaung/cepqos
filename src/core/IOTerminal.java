@@ -4,6 +4,8 @@
  */
 package core;
 
+import core.pubsub.PubSubService;
+import core.pubsub.Relayer;
 import event.EventBean;
 import java.net.Inet4Address;
 import java.util.Collection;
@@ -20,13 +22,12 @@ import org.jgroups.stack.Protocol;
  */
 public class IOTerminal {
     
-    JChannel channel;
-    String id;
+    String _topic;
     String description;
-    Receiver _receiver=null;
+    TopicReceiver _receiver=null;
 
-    public IOTerminal(String id, String description, Receiver receiver) {
-        this.id = id;
+    public IOTerminal(String topic, String description, TopicReceiver receiver) {
+        this._topic = topic;
         this.description = description;
         _receiver = receiver;
     }
@@ -35,39 +36,30 @@ public class IOTerminal {
         this(id, description, null);
     }
     
-    public boolean open(Collection<Protocol> protocolStack) throws Exception{
+    public boolean open() {
         
-        channel =new JChannel(protocolStack);
-        channel.setDiscardOwnMessages(true);
         if(_receiver!=null){
-            channel.setReceiver(_receiver);
+            PubSubService.getInstance().subscribe(_receiver, _topic);
         }
-        channel.connect(id);
-        return true;
-    }
-    
-    
-    public boolean open() throws Exception{
-        channel =new JChannel("tcp.xml");
-        //channel.getProtocolStack().getBottomProtocol().setValue("bind_addr",Inet4Address.getLocalHost());
-         channel.setDiscardOwnMessages(true);
-        if(_receiver!=null){
-            channel.setReceiver(_receiver);
+        else{
+            PubSubService.getInstance().publish(null, _topic); // advertise the new topic
         }
-        channel.connect(id);
+        
         return true;
     }
 
-    public JChannel getChannel() {
-        return channel;
+    public String getTopic() {
+        return _topic;
     }
 
+    
     public String getId() {
-        return id;
+        return _topic;
     }
     
-    public void send(EventBean e) throws Exception{
-        channel.send(null, e);
+    public void send(EventBean e) throws Exception {
+       PubSubService.getInstance().publish(e, _topic); // publish locally
+       Relayer.getInstance().callPublish(e, _topic);  // publish remotely
     }
     
 }

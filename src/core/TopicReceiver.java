@@ -5,13 +5,10 @@
 package core;
 
 import com.google.common.collect.Queues;
-import com.google.common.eventbus.Subscribe;
 import core.pubsub.Subscriber;
 import event.EventBean;
 import java.util.*;
-import org.jgroups.Message;
-import org.jgroups.ReceiverAdapter;
-import org.jgroups.View;
+
 
 /**
  *
@@ -33,7 +30,6 @@ public class TopicReceiver implements Subscriber{
     }   
 
     @Override
-    @Subscribe
     public void notify(Object event) {      
         EventBean evt = (EventBean) event;
         _inputQueue.add(evt);

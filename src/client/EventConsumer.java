@@ -4,7 +4,6 @@
  */
 package client;
 
-import com.google.common.eventbus.Subscribe;
 import core.pubsub.PubSubService;
 import core.pubsub.Subscriber;
 import event.EventBean;
@@ -25,8 +24,6 @@ public class EventConsumer implements Subscriber{
     public EventConsumer(String info, String IDinputTerminal, AnEventHandler handler) {
         _handler = handler;
         try {
-            
-            //_channel.getProtocolStack().getBottomProtocol().setValue("bind_addr",Inet4Address.getLocalHost());
             _info = info;
             _input = IDinputTerminal;
             PubSubService.getInstance().subscribe(this, _input);
@@ -36,7 +33,6 @@ public class EventConsumer implements Subscriber{
     }
 
     @Override
-    @Subscribe
     public void notify(Object event) {
         EventBean evt = (EventBean)event;
         _handler.notify(evt);

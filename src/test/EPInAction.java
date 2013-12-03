@@ -6,6 +6,7 @@ package test;
 
 import core.EqualFilter;
 import core.FilterAgent;
+import core.GreatherThanFilter;
 import core.LessThanFilter;
 import core.pubsub.Relayer;
 import event.EventTypeRepository;
@@ -32,11 +33,11 @@ public class EPInAction {
     public static void main(String[] args) {
         Relayer.getInstance();
         EventTypeRepository.getInstance().dump();
-        FilterAgent filterA = new FilterAgent("LessThan-25-Only", "Test", "outputfilter");        
+        FilterAgent filterA = new FilterAgent("Energivore", "Circuits", "output_A");        
         
-        FilterAgent filterB = new FilterAgent("10-Only", "outputfilter", "enfant");
-        filterA.addFilter(new LessThanFilter("age", 25));
-        filterB.addFilter(new EqualFilter("age", 10));
+        FilterAgent filterB = new FilterAgent("WashingMahine", "Circuits", "output_B");
+        filterA.addFilter(new GreatherThanFilter("realPowerWatts", 10d));
+        filterB.addFilter(new EqualFilter("circuitName", "WashingMahine"));
         try {
             filterA.openIOchannels();
             //Thread.sleep(4000);

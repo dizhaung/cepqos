@@ -1,0 +1,31 @@
+
+<!--
+  Default stack using IP multicasting. It is similar to the "udp"
+  stack in stacks.xml, but doesn't use streaming state transfer and flushing
+  author: Bela Ban
+-->
+
+<config xmlns="urn:org:jgroups"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.3.xsd">
+    <TCP bind_port="8800" bind_interface="en0"
+          />
+     <TCPPING timeout="3000"
+             initial_hosts="victoire.imag.fr[8800]" port_range="1"
+             num_initial_members="1"
+         /> 
+    <!-- <TCPPING timeout="3000"
+             initial_hosts="127.0.0.1[8800]" port_range="1"
+             num_initial_members="1"
+         />
+         -->
+     <MERGE2 max_interval="300000" min_interval="100000"/> 
+    <VERIFY_SUSPECT timeout="1500" />
+    <pbcast.NAKACK use_mcast_xmit="false"
+                   retransmit_timeout="300,600,1200,2400,4800"
+                   discard_delivered_msgs="true"/>
+    <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
+                   max_bytes="400000"/>
+    <pbcast.GMS print_local_addr="true" join_timeout="3000"
+                view_bundling="true"/>
+</config>

@@ -23,7 +23,7 @@ public class Relayer {
 
     private Channel channel;
     private RpcDispatcher disp;
-    private String props = "tcp.xml", CLUSTER = "PubSub";
+    private String props = "tcp_1.xml", CLUSTER = "PubSub";
     private MethodCall call;
     private static Relayer _instance = null;
     private RequestOptions opts;
@@ -46,14 +46,15 @@ public class Relayer {
         return PubSubService.getInstance().publish(evt, topic);
     }
 
-    public void callPublish(EventBean evt, String topic) throws Exception {
+    //public void callPublish(EventBean evt, String topic) throws Exception {
+    public synchronized void callPublish(EventBean evt, String topic) throws Exception {
         call.setArgs(evt, topic);
-         disp.callRemoteMethods(null, call, opts);
+        disp.callRemoteMethods(null, call, opts);
         //System.out.println("Responses: " + rsp_list);
     }
-    
-    public static Relayer getInstance(){
-        if(_instance == null){
+
+    public static Relayer getInstance() {
+        if (_instance == null) {
             _instance = new Relayer();
         }
         return _instance;

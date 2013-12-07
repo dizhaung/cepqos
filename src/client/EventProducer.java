@@ -76,9 +76,9 @@ public class EventProducer {
                         evt.payload.put(attribute, value);
                     }
                 }
-
-                PubSubService.getInstance().publish(evt, _topicName); // publish locally
-                Relayer.getInstance().callPublish(evt, _topicName);  // publish remotely                
+                EventBean[] evts ={evt};
+                PubSubService.getInstance().publish(evts, _topicName); // publish locally
+                Relayer.getInstance().callPublish(evts, _topicName);  // publish remotely                
                 return true;
             } else {
                 throw new EventTypeException("The underlying event type has not been registered");

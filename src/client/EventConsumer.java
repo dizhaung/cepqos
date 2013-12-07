@@ -34,8 +34,8 @@ public class EventConsumer implements Subscriber{
 
     @Override
     public void notify(Object event) {
-        EventBean evt = (EventBean)event;
-        _handler.notify(evt);
+        EventBean[] evts = (EventBean[])event;
+        _handler.notify(evts);
     }
     
     

@@ -57,9 +57,10 @@ public class IOTerminal {
         return _topic;
     }
     
-    public void send(EventBean e) throws Exception {
+    public void send(EventBean[] e) throws Exception {
        PubSubService.getInstance().publish(e, _topic); // publish locally
        Relayer.getInstance().callPublish(e, _topic);  // publish remotely
     }
+     
     
 }

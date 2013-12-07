@@ -22,6 +22,7 @@ public abstract class EPAgent extends Thread {
     protected Queue<EventBean> _selectedEvents;
     private boolean _process = false;
     private static final Object _mutex = new Object();
+    private int numbertoSelect;
 
     public EPAgent() {
         _selectedEvents = Queues.newArrayDeque();
@@ -33,7 +34,7 @@ public abstract class EPAgent extends Thread {
 
     public abstract void process();
 
-    public abstract boolean select();
+    public abstract boolean select(int numbertoSelect);
 
     public boolean openIOchannels() throws Exception {
         try {
@@ -51,7 +52,8 @@ public abstract class EPAgent extends Thread {
         return true;
     }
 
-    public void signal() {
+    public void signal(int i) {
+        numbertoSelect = i;
         synchronized (_mutex) {
             _process = true;
         }
@@ -63,7 +65,7 @@ public abstract class EPAgent extends Thread {
             synchronized (_mutex) {
                 if (_process) {
                     _process = false;
-                    if (select()) {
+                    if (select(numbertoSelect)) {
                         process();
                     }
 

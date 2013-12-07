@@ -2,15 +2,17 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package client;
+package core;
 
-import event.EventBean;
+
+
 
 /**
  *
  * @author epaln
  */
-public interface AnEventHandler {
+public abstract class WindowHandler {
     
-    public void notify (EventBean[] evts);
+      public abstract void register(WindowAgent agent);
+   
 }

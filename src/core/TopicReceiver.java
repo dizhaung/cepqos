@@ -17,8 +17,6 @@ import java.util.*;
 public class TopicReceiver implements Subscriber{
     private EPAgent _epAgent;
     private Queue<EventBean> _inputQueue;
-
-    
  
     public TopicReceiver(EPAgent _epAgent) {
         this._epAgent = _epAgent;
@@ -31,9 +29,12 @@ public class TopicReceiver implements Subscriber{
 
     @Override
     public void notify(Object event) {      
-        EventBean evt = (EventBean) event;
-        _inputQueue.add(evt);
-        _epAgent.signal();
-    }
-    
+        EventBean[] evts = (EventBean[]) event;
+        synchronized(_inputQueue){
+           for(EventBean e: evts){
+           _inputQueue.add(e); 
+        } 
+        }                
+        _epAgent.signal(evts.length);
+    }    
 }

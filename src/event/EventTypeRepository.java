@@ -4,10 +4,7 @@
  */
 package event;
 
-import com.google.common.collect.Lists;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -79,11 +76,9 @@ public class EventTypeRepository {
                     else{
                        System.out.print(", "+s); 
                     }
-
                 }
                 System.out.println(")");
-            }
-            
+            }            
         } catch (Exception ex) {
             //Logger.getLogger(EPInAction.class.getName()).log(Level.SEVERE, null, ex);
         }

@@ -15,6 +15,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.MethodUtils;
 
 /**
@@ -29,19 +30,16 @@ public class EventProducer {
     public EventProducer(String typeName, Class clazz) {
         _clazz = clazz;
         _topicName = typeName;
-
-        try {
-            declareEventType(typeName, clazz);
-        } catch (Exception ex) {
-            System.err.println(ex.getMessage());
-            Logger.getLogger(EventProducer.class.getName()).log(Level.INFO, "Existing event type", ex);
-        }
-
+        declareEventType(typeName, clazz);
     }
 
-    private void declareEventType(String typeName, Class clazz) throws EventTypeException {
+    //private boolean declareEventType(String typeName, Class clazz) throws EventTypeException {
+    private boolean declareEventType(String typeName, Class clazz) {
         if (!EventTypeRepository.getInstance().addEventType(typeName, clazz)) {
-            throw new EventTypeException("The type name " + typeName + " has already been defined");
+            //throw new EventTypeException("The type name " + typeName + " has already been defined");
+            return false;
+        } else {
+            return true;
         }
     }
 
@@ -68,15 +66,15 @@ public class EventProducer {
                     if (attribute.equals("class")) {
                         continue;
                     }
+                    Object value = BeanUtils.getProperty(o, attribute);
+                    //Method getter = MethodUtils.getAccessibleMethod(o.getClass(), pds[i].getReadMethod());
 
-                    Method getter = MethodUtils.getAccessibleMethod(o.getClass(), pds[i].getReadMethod());
-                    if (getter != null) {
-                        Object value = getter.invoke(o, null);
-                        //Object value=BeanUtils.getProperty(o, attribute);
-                        evt.payload.put(attribute, value);
-                    }
+                    //Object value = getter.invoke(o, null);
+
+                    evt.payload.put(attribute, value);
+
                 }
-                EventBean[] evts ={evt};
+                EventBean[] evts = {evt};
                 PubSubService.getInstance().publish(evts, _topicName); // publish locally
                 Relayer.getInstance().callPublish(evts, _topicName);  // publish remotely                
                 return true;

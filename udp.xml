@@ -46,12 +46,13 @@
          oob_thread_pool.queue_max_size="100"
          oob_thread_pool.rejection_policy="discard"/>
 
-    <!--<TCPPING timeout="2000"
-      initial_hosts="victoire.imag.fr[45588]"
-            num_initial_members="3"/> -->
      <TCPPING timeout="2000"
+      initial_hosts="victoire.imag.fr[45588]"
+            num_initial_members="3"/> 
+     <!-- <TCPPING timeout="2000"
       initial_hosts="10.188.12.227[45588]"
             num_initial_members="3"/>
+            -->
     
     <MERGE2 max_interval="30000"
             min_interval="10000"/>

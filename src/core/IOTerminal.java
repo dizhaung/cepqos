@@ -7,12 +7,6 @@ package core;
 import core.pubsub.PubSubService;
 import core.pubsub.Relayer;
 import event.EventBean;
-import java.net.Inet4Address;
-import java.util.Collection;
-import org.jgroups.JChannel;
-import org.jgroups.Message;
-import org.jgroups.Receiver;
-import org.jgroups.stack.Protocol;
 
 
 

@@ -36,18 +36,14 @@ public abstract class EPAgent extends Thread {
 
     public abstract boolean select(int numbertoSelect);
 
-    public boolean openIOchannels() throws Exception {
-        try {
-            for (IOTerminal input : getInputTerminal()) {
-                input.open();
-            }
+    public boolean openIOchannels() {
 
-            for (IOTerminal output : getOutputTerminal()) {
-                output.open();
-            }
+        for (IOTerminal input : getInputTerminal()) {
+            input.open();
+        }
 
-        } catch (Exception ex) {
-            throw ex;
+        for (IOTerminal output : getOutputTerminal()) {
+            output.open();
         }
         return true;
     }

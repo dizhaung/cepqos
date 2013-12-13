@@ -19,12 +19,12 @@ import java.util.logging.Logger;
  * @author epaln
  */
 public class FilterAgent extends EPAgent {
-
+    
     IOTerminal inputTerminal;
     IOTerminal outputTerminal;
     private final short COUNT = 3; // number of time we try to notify an event 
     List<Func1<EventBean, Boolean>> _filters = new ArrayList<>();
-
+    
     public FilterAgent(String info, String IDinputTerminal, String IDoutputTerminal) {
         super();
         //this._filter = filter;
@@ -34,27 +34,27 @@ public class FilterAgent extends EPAgent {
         inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver);
         outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type);
     }
-
+    
     @Override
     public Collection<IOTerminal> getInputTerminal() {
         ArrayList<IOTerminal> inputs = new ArrayList<IOTerminal>();
         inputs.add(inputTerminal);
         return inputs;
     }
-
+    
     @Override
     public Collection<IOTerminal> getOutputTerminal() {
         ArrayList<IOTerminal> outputs = new ArrayList<IOTerminal>();
         outputs.add(outputTerminal);
         return outputs;
     }
-
-    private boolean notify(EventBean e) {
-        System.out.println("[" + this._info + "] notify event: " + e.payload);
-        EventBean[] evts ={e};
+    
+    private boolean notify(EventBean[] evts) {        
+        System.out.println("[" + this._info + "] notify event: " + evts);
+        
         try {
             outputTerminal.send(evts);
-
+            
         } catch (Exception ex) {
             Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);
             System.out.println("Cannot send the eventBean Message :(");
@@ -62,16 +62,17 @@ public class FilterAgent extends EPAgent {
         }
         return true;
     }
-
+    
     private void p(String msg) {
         System.out.println(msg);
     }
-
+    
     @Override
     public void process() {
+        ArrayList<EventBean> toNotify = new ArrayList<>();
         while (!_selectedEvents.isEmpty()) {
-            boolean notified, pass_filters = true;
-            int attempt = 0;
+            boolean pass_filters = true;
+            
             EventBean evt = _selectedEvents.poll();
             for (Func1<EventBean, Boolean> _filter : _filters) {
                 if (!_filter.invoke(evt)) {
@@ -80,17 +81,22 @@ public class FilterAgent extends EPAgent {
                 }
             }
             if (pass_filters) {
-                do {
-                    notified = notify(evt);
-                    attempt++;
-                } while (!notified && (attempt != COUNT));
-                if (attempt == COUNT) {
-                    p("Event not notified: " + evt.payload);
-                }
+                toNotify.add(evt);                
+            }
+        }
+        if (!toNotify.isEmpty()) {
+            boolean notified = false;
+            int attempt = 0;
+            do {
+                notified = notify(toNotify.toArray(new EventBean[1]));
+                attempt++;
+            } while (!notified && (attempt != COUNT));
+            if (attempt == COUNT) {
+                p("Notification error: " + toNotify.size() + " events not notified :(");
             }
         }
     }
-
+    
     @Override
     public boolean select(int numbertoSelect) {
         boolean ok = false;
@@ -103,7 +109,7 @@ public class FilterAgent extends EPAgent {
         }
         return ok;
     }
-
+    
     public void addFilter(Func1<EventBean, Boolean> filter) {
         this._filters.add(filter);
     }

@@ -24,8 +24,7 @@ public class Notifier extends Thread{
     
     @Override
     public void run() {
-        try {
-            System.out.println(_evts.length);
+        try {           
             _output.send(_evts);
         } catch (Exception ex) {
             Logger.getLogger(Notifier.class.getName()).log(Level.SEVERE, null, ex);

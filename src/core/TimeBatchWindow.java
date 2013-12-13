@@ -10,25 +10,28 @@ import hu.akarnokd.reactive4java.base.Observable;
 import hu.akarnokd.reactive4java.reactive.Reactive;
 import hu.akarnokd.reactive4java.util.ObserverAdapter;
 import java.util.Queue;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
  * @author epaln
  */
-public class BatchNWindow extends WindowHandler {
-
+public class TimeBatchWindow extends WindowHandler {
     WindowAgent _wagent;
-    int _size;
     Notifier notifier;
+    TimeUnit _unit;
+    long _timespan;
 
-    public BatchNWindow(int size) {
-        _size = size;
+    public TimeBatchWindow(long timespan, TimeUnit timeUnit) {
+        this._unit = timeUnit;
+        this._timespan = timespan;
     }
+    
 
     @Override
     public void register(WindowAgent agent) {
         _wagent = agent;
-        Observable<Observable<EventBean>> windows = Reactive.window(_wagent._sourceStream, _size);
+        Observable<Observable<EventBean>> windows = Reactive.window(_wagent._sourceStream, _timespan, _unit);
 
         windows.register(new ObserverAdapter<Observable<EventBean>>() {
             @Override
@@ -44,7 +47,7 @@ public class BatchNWindow extends WindowHandler {
 
                     @Override
                     public void finish() {
-                       if (!res.isEmpty()) {
+                        if (!res.isEmpty()) {
                             EventBean[] evts;
                             evts = res.toArray(new EventBean[1]);
                             notifier = new Notifier(evts, _wagent.outputTerminal);
@@ -55,4 +58,5 @@ public class BatchNWindow extends WindowHandler {
             }
         });
     }
+    
 }

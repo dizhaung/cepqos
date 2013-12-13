@@ -15,20 +15,21 @@ import java.util.Queue;
  *
  * @author epaln
  */
-public class BatchNWindow extends WindowHandler {
+public class LastNWindow extends WindowHandler {
 
     WindowAgent _wagent;
     int _size;
     Notifier notifier;
 
-    public BatchNWindow(int size) {
-        _size = size;
+    public LastNWindow(int _size) {
+        this._size = _size;
     }
-
+    
+    
     @Override
     public void register(WindowAgent agent) {
         _wagent = agent;
-        Observable<Observable<EventBean>> windows = Reactive.window(_wagent._sourceStream, _size);
+        Observable<Observable<EventBean>> windows = Reactive.window(_wagent._sourceStream, _size, 1);
 
         windows.register(new ObserverAdapter<Observable<EventBean>>() {
             @Override
@@ -44,15 +45,16 @@ public class BatchNWindow extends WindowHandler {
 
                     @Override
                     public void finish() {
-                       if (!res.isEmpty()) {
+                        if (!res.isEmpty()) {
                             EventBean[] evts;
                             evts = res.toArray(new EventBean[1]);
                             notifier = new Notifier(evts, _wagent.outputTerminal);
                             notifier.start();
-                        }                       
+                        }                      
                     }
                 });
             }
         });
     }
+    
 }

@@ -49,7 +49,7 @@ public class CSVFileLoader<T> {
      */
     public void loadData() throws Exception {
         data = Lists.newArrayList();
-       
+
         String line = input.readLine();
         Class classHandle = Class.forName(clazz.getName());
         while (line != null) {
@@ -58,7 +58,7 @@ public class CSVFileLoader<T> {
             int i = 0;
             while (tokenizer.hasMoreTokens()) {
                 String token = tokenizer.nextToken();
-                boolean ok=set(bean,format[i],token);
+                boolean ok = set(bean, format[i], token);
                 i++;
             }
             //System.out.println(bean);
@@ -66,14 +66,13 @@ public class CSVFileLoader<T> {
             line = input.readLine();
         }
         input.close();
-        
+
     }
 
     public ArrayList<T> getData() {
         return data;
     }
 
-    
     private boolean set(Object object, String fieldName, String fieldValue) throws IllegalArgumentException, IllegalAccessException {
         Class<?> clazz = object.getClass();
         while (clazz != null) {
@@ -81,75 +80,74 @@ public class CSVFileLoader<T> {
                 Field field = clazz.getDeclaredField(fieldName);
                 String type = field.getType().getSimpleName();
                 field.setAccessible(true);
-                if(type.equals("long")){
-                   long castedValue = Long.parseLong(fieldValue);
-                   field.setLong(object, castedValue);
-                   return true;
+                switch (type) {
+                    case "long": {
+                        long castedValue = Long.parseLong(fieldValue);
+                        field.setLong(object, castedValue);
+                        return true;
+                    }
+                    case "int": {
+                        int castedValue = Integer.parseInt(fieldValue);
+                        field.setInt(object, castedValue);
+                        return true;
+                    }
+                    case "float": {
+                        float castedValue = Float.parseFloat(fieldValue);
+                        field.setFloat(object, castedValue);
+                        return true;
+                    }
+                    case "double": {
+                        double castedValue = Double.parseDouble(fieldValue);
+                        field.setDouble(object, castedValue);
+                        return true;
+                    }
+                    case "short": {
+                        short castedValue = Short.parseShort(fieldValue);
+                        field.setShort(object, castedValue);
+                        return true;
+                    }
+                    case "boolean": {
+                        boolean castedValue = Boolean.parseBoolean(fieldValue);
+                        field.setBoolean(object, castedValue);
+                        return true;
+                    }
+                    default:
+                        field.set(object, fieldValue);
+                        return true;
                 }
-                else if(type.equals("int")){
-                   int castedValue = Integer.parseInt(fieldValue);
-                   field.setInt(object, castedValue);
-                   return true;
-                }
-                else if(type.equals("float")){
-                   float castedValue = Float.parseFloat(fieldValue);
-                   field.setFloat(object, castedValue);
-                   return true;
-                }
-                else if(type.equals("double")){
-                   double castedValue = Double.parseDouble(fieldValue);
-                   field.setDouble(object, castedValue);
-                   return true;
-                }
-                else if(type.equals("short")){
-                   short castedValue = Short.parseShort(fieldValue);
-                   field.setShort(object, castedValue);
-                   return true;
-                }
-                else if(type.equals("boolean")){
-                   boolean castedValue = Boolean.parseBoolean(fieldValue);
-                   field.setBoolean(object, castedValue);
-                   return true;
-                }
-                else {                  
-                   field.set(object, fieldValue);
-                   return true;
-                }
-                //castedValue = field.getType().cast(fieldValue);
-                
+
             } catch (NoSuchFieldException ex) {
                 clazz = clazz.getSuperclass();
-            } 
+            }
         }
         return false;
     }
-    
-    public T getNext() throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException{
-        
+
+    public T getNext() throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+
         String line = input.readLine();
-        if(line!=null){
+        if (line != null) {
             Class classHandle = Class.forName(clazz.getName());
-        
+
             Object bean = classHandle.newInstance();
             StringTokenizer tokenizer = new StringTokenizer(line, ",");
             int i = 0;
             while (tokenizer.hasMoreTokens()) {
                 String token = tokenizer.nextToken();
-                boolean ok=set(bean,format[i],token);
+                boolean ok = set(bean, format[i], token);
                 i++;
             }
-            //System.out.println(bean);
+
             return (T) bean;
-        }
-        else{
+        } else {
             closeInput();
             return null;
         }
-        
-        
+
+
     }
-    
-    public void closeInput() throws IOException{
+
+    public void closeInput() throws IOException {
         input.close();
     }
 }

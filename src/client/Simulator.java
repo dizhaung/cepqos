@@ -79,7 +79,7 @@ public class Simulator<T> extends Thread{
                     for (T evt : realValues) {
                         double value = Double.parseDouble(BeanUtils.getProperty(evt, attribute));
                         // valeur à ajouter ou retrancher
-                        double eps = random.nextDouble() * ECART_TYPE;
+                        double eps = random.nextDouble() * (ECART_TYPE/2);
                         // ajouter ou retrancher?
                         if(random.nextBoolean()){ // ajouter
                             value+= eps;

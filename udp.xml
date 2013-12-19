@@ -10,6 +10,7 @@
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.3.xsd">
     <UDP
          bind_interface="en0"
+         
          bind_port="45588"
          tos="8"
          ucast_recv_buf_size="5M"
@@ -46,18 +47,26 @@
          oob_thread_pool.queue_max_size="100"
          oob_thread_pool.rejection_policy="discard"/>
 
-     <TCPPING timeout="2000"
-      initial_hosts="victoire.imag.fr[45588]"
-            num_initial_members="3"/> 
      <!-- <TCPPING timeout="2000"
+      initial_hosts="victoire.imag.fr[45588]"
+            num_initial_members="3"/>            
+             
+             
+      <TCPPING timeout="2000"
       initial_hosts="10.188.12.227[45588]"
             num_initial_members="3"/>
-            -->
+           -->
+    <TCPPING timeout="2000"
+      initial_hosts="victoire.imag.fr[45588]"
+            num_initial_members="3"/> 
     
     <MERGE2 max_interval="30000"
             min_interval="10000"/>
     <FD_SOCK/>
-    <FD_ALL/>
+    <FD_ALL 
+        interval="30000"
+        timeout="10000"
+    />
     <VERIFY_SUSPECT timeout="1500"  />
     <BARRIER />
     

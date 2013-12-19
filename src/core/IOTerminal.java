@@ -36,7 +36,7 @@ public class IOTerminal {
             PubSubService.getInstance().subscribe(_receiver, _topic);
         }
         else{
-            PubSubService.getInstance().publish(null, _topic); // advertise the new topic
+            PubSubService.getInstance().publish(null, _topic); // cadd the new topic
         }
         
         return true;
@@ -54,7 +54,5 @@ public class IOTerminal {
     public void send(EventBean[] e) throws Exception {
        PubSubService.getInstance().publish(e, _topic); // publish locally
        Relayer.getInstance().callPublish(e, _topic);  // publish remotely
-    }
-     
-    
+    }  
 }

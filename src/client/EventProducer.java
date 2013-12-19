@@ -15,7 +15,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.beanutils.BeanUtils;
+//import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.MethodUtils;
 
 /**
@@ -66,15 +66,15 @@ public class EventProducer {
                     if (attribute.equals("class")) {
                         continue;
                     }
-                    Object value = BeanUtils.getProperty(o, attribute);
-                    //Method getter = MethodUtils.getAccessibleMethod(o.getClass(), pds[i].getReadMethod());
 
-                    //Object value = getter.invoke(o, null);
-
-                    evt.payload.put(attribute, value);
-
+                    Method getter = MethodUtils.getAccessibleMethod(o.getClass(), pds[i].getReadMethod());
+                    if (getter != null) {
+                        Object value = getter.invoke(o, null);
+                        //Object value=BeanUtils.getProperty(o, attribute);
+                        evt.payload.put(attribute, value);
+                    }
                 }
-                EventBean[] evts = {evt};
+                EventBean[] evts ={evt};
                 PubSubService.getInstance().publish(evts, _topicName); // publish locally
                 Relayer.getInstance().callPublish(evts, _topicName);  // publish remotely                
                 return true;

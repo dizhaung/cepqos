@@ -50,7 +50,7 @@ public class FilterAgent extends EPAgent {
     }
     
     private boolean notify(EventBean[] evts) {        
-        System.out.println("[" + this._info + "] notify event: " + evts);
+        //System.out.println("[" + this._info + "] notify event: " + evts);
         
         try {
             outputTerminal.send(evts);

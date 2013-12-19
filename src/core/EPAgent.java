@@ -58,7 +58,7 @@ public abstract class EPAgent extends Thread {
     @Override
     public void run() {
         while (true) {
-            synchronized (_mutex) {
+            synchronized (_mutex) { // use a synchronized queue here...
                 if (_process) {
                     _process = false;
                     if (select(numbertoSelect)) {

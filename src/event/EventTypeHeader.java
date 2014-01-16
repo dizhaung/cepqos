@@ -20,21 +20,21 @@ public class EventTypeHeader implements Serializable {
     // header attribute indicators
     private long occurenceTime; // interval ?
     private long detectionTime;
-    private Object eventSource;
-    private String eventIdentity; // UUID generated 
-    private String eventAnnotation; // human readable event description
+    //private Object eventSource;
+    //private String eventIdentity; // UUID generated 
+    //private String eventAnnotation; // human readable event description
 
     public EventTypeHeader() {
-       eventIdentity = UUID.randomUUID().toString();
+       //eventIdentity = UUID.randomUUID().toString();
     }
 
     public EventTypeHeader(String typeIdentifier, long occurenceTime, long detectionTime, Object eventSource, String eventIdentity, String eventAnnotation) {
         this.typeIdentifier = typeIdentifier;
         this.occurenceTime = occurenceTime;
         this.detectionTime = detectionTime;
-        this.eventSource = eventSource;
-        this.eventIdentity = eventIdentity;
-        this.eventAnnotation = eventAnnotation;
+        //this.eventSource = eventSource;
+        //this.eventIdentity = eventIdentity;
+        //this.eventAnnotation = eventAnnotation;
     }
 
     public boolean isIsComposite() {
@@ -68,7 +68,7 @@ public class EventTypeHeader implements Serializable {
     public void setDetectionTime(long detectionTime) {
         this.detectionTime = detectionTime;
     }
-
+/*
     public Object getEventSource() {
         return eventSource;
     }
@@ -92,6 +92,6 @@ public class EventTypeHeader implements Serializable {
     public void setEventAnnotation(String eventAnnotation) {
         this.eventAnnotation = eventAnnotation;
     }
-    
+    */
     
 }

@@ -19,12 +19,12 @@ import java.util.logging.Logger;
  * @author epaln
  */
 public class FilterAgent extends EPAgent {
-    
+
     IOTerminal inputTerminal;
     IOTerminal outputTerminal;
     private final short COUNT = 3; // number of time we try to notify an event 
     List<Func1<EventBean, Boolean>> _filters = new ArrayList<>();
-    
+
     public FilterAgent(String info, String IDinputTerminal, String IDoutputTerminal) {
         super();
         //this._filter = filter;
@@ -34,27 +34,27 @@ public class FilterAgent extends EPAgent {
         inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver);
         outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type);
     }
-    
+
     @Override
     public Collection<IOTerminal> getInputTerminal() {
         ArrayList<IOTerminal> inputs = new ArrayList<IOTerminal>();
         inputs.add(inputTerminal);
         return inputs;
     }
-    
+
     @Override
     public Collection<IOTerminal> getOutputTerminal() {
         ArrayList<IOTerminal> outputs = new ArrayList<IOTerminal>();
         outputs.add(outputTerminal);
         return outputs;
     }
-    
-    private boolean notify(EventBean[] evts) {        
+
+    private boolean notify(EventBean[] evts) {
         //System.out.println("[" + this._info + "] notify event: " + evts);
-        
+
         try {
             outputTerminal.send(evts);
-            
+
         } catch (Exception ex) {
             Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);
             System.out.println("Cannot send the eventBean Message :(");
@@ -62,17 +62,17 @@ public class FilterAgent extends EPAgent {
         }
         return true;
     }
-    
+
     private void p(String msg) {
         System.out.println(msg);
     }
-    
+
     @Override
     public void process() {
         ArrayList<EventBean> toNotify = new ArrayList<>();
         while (!_selectedEvents.isEmpty()) {
             boolean pass_filters = true;
-            
+
             EventBean evt = _selectedEvents.poll();
             for (Func1<EventBean, Boolean> _filter : _filters) {
                 if (!_filter.invoke(evt)) {
@@ -81,7 +81,7 @@ public class FilterAgent extends EPAgent {
                 }
             }
             if (pass_filters) {
-                toNotify.add(evt);                
+                toNotify.add(evt);
             }
         }
         if (!toNotify.isEmpty()) {
@@ -96,20 +96,19 @@ public class FilterAgent extends EPAgent {
             }
         }
     }
-    
+
     @Override
-    public boolean select(int numbertoSelect) {
-        boolean ok = false;
-        for (int i = 1; i <= numbertoSelect; i++) {
-            EventBean evt = _receiver.getInputQueue().poll();
-            if (evt != null) {
+    public boolean select() {
+        try {
+            for (EventBean evt : _receiver.getInputQueue().take()) {
                 _selectedEvents.add(evt);
-                ok = true;
             }
+        } catch (InterruptedException ex) {
+            Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return ok;
+        return !_selectedEvents.isEmpty();
     }
-    
+
     public void addFilter(Func1<EventBean, Boolean> filter) {
         this._filters.add(filter);
     }

@@ -9,8 +9,8 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.3.xsd">
     <UDP
-        
-         bind_addr = "localhost"
+         bind_addr="127.0.0.1"
+         bind_interface="lo0"         
          bind_port="45588"
          tos="8"
          ucast_recv_buf_size="5M"
@@ -48,7 +48,7 @@
          oob_thread_pool.rejection_policy="discard"/>
 
      <TCPPING timeout="2000"
-      initial_hosts="localhost[45588]"
+      initial_hosts="127.0.0.1[45588]"
             num_initial_members="3"/>            
              
       <!--       

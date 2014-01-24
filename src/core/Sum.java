@@ -13,11 +13,10 @@ import event.EventBean;
 public class Sum extends Aggregate{
     
     String _attribute;
-    AggregatorAgent _agent;
     String _aggAttribute;
     
-    public Sum(AggregatorAgent agent, String attribute, String aggregatedAttribute ) {
-        _agent = agent;
+    public Sum(String attribute, String aggregatedAttribute ) {
+      
         _attribute = attribute;
         _aggAttribute = aggregatedAttribute;
     }

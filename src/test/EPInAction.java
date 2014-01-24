@@ -4,6 +4,7 @@
  */
 package test;
 
+import core.Aggregate;
 import core.AggregatorAgent;
 import core.EqualFilter;
 import core.FilterAgent;
@@ -11,8 +12,8 @@ import core.GreatherThanFilter;
 import core.Sum;
 import core.TimeBatchWindow;
 import core.WindowAgent;
+import core.WindowHandler;
 import core.pubsub.Relayer;
-import event.EventTypeRepository;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.LogManager;
 
@@ -30,32 +31,35 @@ public class EPInAction {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        
+        // start the pub/sub middleware...
         Relayer.getInstance();
         
-        EventTypeRepository.getInstance().dump();
-        
-        TimeBatchWindow win = new TimeBatchWindow(10, TimeUnit.SECONDS);
-        WindowAgent windowA = new WindowAgent("Windows", "filterA", "window", win);
-        
-        FilterAgent filterA = new FilterAgent("Energivore", "MeterEvent", "filterA");
-        //filterA.addFilter(new GreatherThanFilter("realPowerWatts", 30d));
+        // filter node
+        FilterAgent filterA = new FilterAgent(null, "MeterEvent", "filterA");
         filterA.addFilter(new EqualFilter("meterName", "b878"));
+        filterA.addFilter(new GreatherThanFilter("realPowerWatts", 0d));
+        
+        // window node
+        
+        WindowHandler win = new TimeBatchWindow(10, TimeUnit.SECONDS);
+        WindowAgent windowA = new WindowAgent(null, "filterA", "window");
+        windowA.setWindowHandler(win);
+        
+        // aggregator node
         AggregatorAgent aggrA = new AggregatorAgent(null, "window", "SumPwr");
-        Sum sum = new Sum(aggrA, "realPowerWatts", "sumPwr");
+        Aggregate sum = new Sum("realPowerWatts", "sumPwr");
         aggrA.setAggregator(sum);
-        FilterAgent filterB = new FilterAgent("WashingMachine", "Circuits", "filterB");
-
-        filterB.addFilter(new EqualFilter("circuitName", "WashingMachine"));
-        //BatchNWindow batchwin = new BatchNWindow(3000);
-
-        filterA.openIOchannels();
-        filterB.openIOchannels();
+        
+       
+        // Open the Event processing network connections
+        filterA.openIOchannels();        
         windowA.openIOchannels();
         aggrA.openIOchannels();
-
+        
+        // start the Event processing network
         windowA.start();
         filterA.start();
-        filterB.start();
         aggrA.start();
 
     }

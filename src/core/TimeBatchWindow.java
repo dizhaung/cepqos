@@ -50,6 +50,7 @@ public class TimeBatchWindow extends WindowHandler {
                         if (!res.isEmpty()) {
                             EventBean[] evts;
                             evts = res.toArray(new EventBean[1]);
+                            res.clear();
                             notifier = new Notifier(evts, _wagent.outputTerminal);
                             notifier.start();
                         }                       

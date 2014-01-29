@@ -55,11 +55,13 @@ public class PubSubService {
         if (!_topicBus.containsKey(topic)) {
             eBus = new EventBus();
             _topicBus.put(topic, eBus);
-        }
-        else {
-            eBus = _topicBus.get(topic);   
+        } else {
+            eBus = _topicBus.get(topic);
         }
         eBus.register(subscriber);
+        // inform other peers that this node is interested to receive messages from this topic
+        Relayer.getInstance().advertise(topic, Relayer.getInstance().getAddress()); // adertise locally
+        Relayer.getInstance().callAdvertise(topic, Relayer.getInstance().getAddress()); // advertise remotely
     }
 
     public static PubSubService getInstance() {

@@ -33,7 +33,7 @@ public class BatchNWindow extends WindowHandler {
         windows.register(new ObserverAdapter<Observable<EventBean>>() {
             @Override
             public void next(Observable<EventBean> aWindow) {
-                
+
                 aWindow.register(new ObserverAdapter<EventBean>() {
                     Queue<EventBean> res = Queues.newArrayDeque();
 
@@ -44,13 +44,13 @@ public class BatchNWindow extends WindowHandler {
 
                     @Override
                     public void finish() {
-                       if (!res.isEmpty()) {
+                        if (!res.isEmpty()) {
                             EventBean[] evts;
                             evts = res.toArray(new EventBean[1]);
                             res.clear();
                             notifier = new Notifier(evts, _wagent.outputTerminal);
                             notifier.start();
-                        }                       
+                        }
                     }
                 });
             }

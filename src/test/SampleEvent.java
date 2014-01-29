@@ -9,6 +9,7 @@ package test;
  * @author epaln
  */
 public class SampleEvent {
+
     private String nom;
     private int age;
     private double price;
@@ -36,6 +37,4 @@ public class SampleEvent {
     public void setPrice(double price) {
         this.price = price;
     }
-    
-    
 }

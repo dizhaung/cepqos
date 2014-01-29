@@ -11,6 +11,6 @@ import event.EventBean;
  * @author epaln
  */
 public interface AnEventHandler {
-    
-    public void notify (EventBean[] evts);
+
+    public void notify(EventBean[] evts);
 }

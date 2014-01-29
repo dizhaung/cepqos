@@ -15,7 +15,7 @@ import org.jgroups.JChannel;
  *
  * @author epaln
  */
-public class EventConsumer implements Subscriber{
+public class EventConsumer implements Subscriber {
 
     JChannel _channel;
     String _info, _input;
@@ -34,10 +34,7 @@ public class EventConsumer implements Subscriber{
 
     @Override
     public void notify(Object event) {
-        EventBean[] evts = (EventBean[])event;
+        EventBean[] evts = (EventBean[]) event;
         _handler.notify(evts);
     }
-    
-    
-   
 }

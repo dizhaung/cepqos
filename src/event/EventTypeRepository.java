@@ -62,7 +62,7 @@ public class EventTypeRepository {
 
     public void dump() {
         System.out.println("*** Registered Event types ***");
-        int count =0;
+        int count = 0;
         try {
             for (String eventType : EventTypeRepository.getInstance().getAllRegisteredType()) {
                 count++;
@@ -72,16 +72,15 @@ public class EventTypeRepository {
                     if (i == 0) {
                         System.out.print(s);
                         i++;
-                    }
-                    else{
-                       System.out.print(", "+s); 
+                    } else {
+                        System.out.print(", " + s);
                     }
                 }
                 System.out.println(")");
-            }            
+            }
         } catch (Exception ex) {
             //Logger.getLogger(EPInAction.class.getName()).log(Level.SEVERE, null, ex);
         }
-      System.out.println("*** Total: "+count+" event type(s) ***");
+        System.out.println("*** Total: " + count + " event type(s) ***");
     }
 }

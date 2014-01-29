@@ -74,7 +74,7 @@ public class EventProducer {
                         evt.payload.put(attribute, value);
                     }
                 }
-                EventBean[] evts ={evt};
+                EventBean[] evts = {evt};
                 PubSubService.getInstance().publish(evts, _topicName); // publish locally
                 Relayer.getInstance().callPublish(evts, _topicName);  // publish remotely                
                 return true;

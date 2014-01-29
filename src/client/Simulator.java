@@ -15,7 +15,7 @@ import org.apache.commons.beanutils.BeanUtils;
  *
  * @author epaln
  */
-public class Simulator<T> extends Thread{
+public class Simulator<T> extends Thread {
 
     CSVFileLoader<T> loader;
     String typeName;
@@ -38,9 +38,9 @@ public class Simulator<T> extends Thread{
         loader = new CSVFileLoader<>(new File(fileName), propertyOrder, clazz);
         realValues = new ArrayList<>();
     }
-    
+
     @Override
-    public void run(){
+    public void run() {
         boolean isSimulating = false;
         producer = new EventProducer(typeName, _clazz);
         //System.out.println("generating events...");
@@ -70,34 +70,35 @@ public class Simulator<T> extends Thread{
                         }
                         var = var / realValues.size();
                         ECART_TYPE = Math.sqrt(var);
-                        System.out.println("sigma = "+ ECART_TYPE);
+                        System.out.println("sigma = " + ECART_TYPE);
                     }
 
                 } else {
                     passage++;
-                    System.out.println("Start Simulation N°"+ passage+"...");
+                    System.out.println("Start Simulation N°" + passage + "...");
                     for (T evt : realValues) {
                         double value = Double.parseDouble(BeanUtils.getProperty(evt, attribute));
                         // valeur à ajouter ou retrancher
-                        double eps = random.nextDouble() * (ECART_TYPE/2);
+                        double eps = random.nextDouble() * (ECART_TYPE / 2);
                         // ajouter ou retrancher?
-                        if(random.nextBoolean()){ // ajouter
-                            value+= eps;
-                        }
-                        else{  // retrancher
-                            value-=eps;
-                            if(value<0) value +=eps;
+                        if (random.nextBoolean()) { // ajouter
+                            value += eps;
+                        } else {  // retrancher
+                            value -= eps;
+                            if (value < 0) {
+                                value += eps;
+                            }
                         }
                         BeanUtils.setProperty(evt, attribute, value);
                         long timestamp = Long.parseLong(BeanUtils.getProperty(evt, "timestampUTC"));
-                        timestamp += 86400*passage;
+                        timestamp += 86400 * passage;
                         BeanUtils.setProperty(evt, "timestampUTC", timestamp);
-                        System.out.println( evt);
+                        System.out.println(evt);
                         i++;
                         producer.sendEvent(evt);
                         Thread.sleep(delay);
                     }
-                    System.out.println("End Simulation N°"+ passage+"...");
+                    System.out.println("End Simulation N°" + passage + "...");
 
                 }
             }
@@ -109,7 +110,7 @@ public class Simulator<T> extends Thread{
     }
 
     public Simulator simulate(String attribute) {
-        this.attribute = attribute; 
+        this.attribute = attribute;
         return this;
     }
 }

@@ -9,6 +9,4 @@ package event;
  * @author epaln
  */
 public class EventTypeEntry {
-    
-    
 }

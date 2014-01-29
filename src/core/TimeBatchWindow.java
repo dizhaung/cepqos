@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
  * @author epaln
  */
 public class TimeBatchWindow extends WindowHandler {
+
     WindowAgent _wagent;
     Notifier notifier;
     TimeUnit _unit;
@@ -26,7 +27,6 @@ public class TimeBatchWindow extends WindowHandler {
         this._unit = timeUnit;
         this._timespan = timespan;
     }
-    
 
     @Override
     public void register(WindowAgent agent) {
@@ -36,7 +36,7 @@ public class TimeBatchWindow extends WindowHandler {
         windows.register(new ObserverAdapter<Observable<EventBean>>() {
             @Override
             public void next(Observable<EventBean> aWindow) {
-                
+
                 aWindow.register(new ObserverAdapter<EventBean>() {
                     Queue<EventBean> res = Queues.newArrayDeque();
 
@@ -53,11 +53,10 @@ public class TimeBatchWindow extends WindowHandler {
                             res.clear();
                             notifier = new Notifier(evts, _wagent.outputTerminal);
                             notifier.start();
-                        }                       
+                        }
                     }
                 });
             }
         });
     }
-    
 }

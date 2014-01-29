@@ -11,7 +11,7 @@ import event.EventBean;
  *
  * @author epaln
  */
-public class EqualFilter implements Func1<EventBean, Boolean>{
+public class EqualFilter implements Func1<EventBean, Boolean> {
 
     private String _attributeName;
     private Object _value;
@@ -20,40 +20,38 @@ public class EqualFilter implements Func1<EventBean, Boolean>{
         this._attributeName = _attributeName;
         this._value = _value;
     }
-    
-    
+
     @Override
     public Boolean invoke(EventBean evt) {
-         Object val = evt.payload.get(_attributeName);
-         return val.equals(_value);
-         /*
-        if(val instanceof Integer){
-            int castedVal = (int)val;
-            int castedValue = (int) _value;
+        Object val = evt.payload.get(_attributeName);
+        return val.equals(_value);
+        /*
+         if(val instanceof Integer){
+         int castedVal = (int)val;
+         int castedValue = (int) _value;
             
-             if (castedVal<=castedValue)
-                 return true;
-             else return false;           
-        }
+         if (castedVal<=castedValue)
+         return true;
+         else return false;           
+         }
         
-        else if(val instanceof Float){
-            float castedVal = (float)val;
-            float castedValue = (float) _value;
+         else if(val instanceof Float){
+         float castedVal = (float)val;
+         float castedValue = (float) _value;
             
-             if (castedVal<=castedValue)
-                 return true;
-             else return false;
-        }
-        else if(val instanceof Double){
-            double castedVal = (double)val;
-            double castedValue = (double) _value;
+         if (castedVal<=castedValue)
+         return true;
+         else return false;
+         }
+         else if(val instanceof Double){
+         double castedVal = (double)val;
+         double castedValue = (double) _value;
             
-             if (castedVal<=castedValue)
-                 return true;
-             else return false;
-        }
-        else return false;
+         if (castedVal<=castedValue)
+         return true;
+         else return false;
+         }
+         else return false;
          */
     }
-    
 }

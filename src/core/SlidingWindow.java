@@ -33,7 +33,7 @@ public class SlidingWindow extends WindowHandler {
     @Override
     public void register(WindowAgent agent) {
         _wagent = agent;
-        Observable<Observable<EventBean>> windows = Reactive.window(_wagent._sourceStream, _timespan, _timeshift ,_unit);
+        Observable<Observable<EventBean>> windows = Reactive.window(_wagent._sourceStream, _timespan, _timeshift, _unit);
 
         windows.register(new ObserverAdapter<Observable<EventBean>>() {
             @Override
@@ -54,7 +54,7 @@ public class SlidingWindow extends WindowHandler {
                             evts = res.toArray(new EventBean[1]);
                             res.clear();
                             notifier = new Notifier(evts, _wagent.outputTerminal);
-                            notifier.start();                      
+                            notifier.start();
                         }
                     }
                 });

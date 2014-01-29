@@ -31,7 +31,7 @@ public abstract class EPAgent extends Thread {
     public abstract Collection<IOTerminal> getOutputTerminal();
 
     public abstract void process();
-    
+
     public abstract boolean select();
 
     public boolean openIOchannels() {
@@ -46,20 +46,20 @@ public abstract class EPAgent extends Thread {
         return true;
     }
 
- /*
-    public void signal(int i) {
+    /*
+     public void signal(int i) {
         
-        synchronized (_mutex) {
-            _process = true;
-        }
-    }
-*/
+     synchronized (_mutex) {
+     _process = true;
+     }
+     }
+     */
     @Override
     public void run() {
-        while (true) {            
-             if(select()){
-                process(); 
-             }
+        while (true) {
+            if (select()) {
+                process();
+            }
         }
     }
 }

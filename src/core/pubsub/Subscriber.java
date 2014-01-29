@@ -11,5 +11,7 @@ import com.google.common.eventbus.Subscribe;
  * @author epaln
  */
 public interface Subscriber<T> {
-    @Subscribe public void notify(T event);  
+
+    @Subscribe
+    public void notify(T event);
 }

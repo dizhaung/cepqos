@@ -8,10 +8,9 @@ package Exceptions;
  *
  * @author epaln
  */
-public class EventTypeException extends Exception{
-     
+public class EventTypeException extends Exception {
+
     public EventTypeException(String msg) {
         super(msg);
     }
-    
 }

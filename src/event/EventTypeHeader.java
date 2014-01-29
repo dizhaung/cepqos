@@ -12,11 +12,10 @@ import java.util.UUID;
  * @author epaln
  */
 public class EventTypeHeader implements Serializable {
-    
+
     // type description attribute
-    private boolean isComposite=false;
+    private boolean isComposite = false;
     private String typeIdentifier;
-    
     // header attribute indicators
     private long occurenceTime; // interval ?
     private long detectionTime;
@@ -25,7 +24,7 @@ public class EventTypeHeader implements Serializable {
     //private String eventAnnotation; // human readable event description
 
     public EventTypeHeader() {
-       //eventIdentity = UUID.randomUUID().toString();
+        //eventIdentity = UUID.randomUUID().toString();
     }
 
     public EventTypeHeader(String typeIdentifier, long occurenceTime, long detectionTime, Object eventSource, String eventIdentity, String eventAnnotation) {
@@ -68,30 +67,29 @@ public class EventTypeHeader implements Serializable {
     public void setDetectionTime(long detectionTime) {
         this.detectionTime = detectionTime;
     }
-/*
-    public Object getEventSource() {
-        return eventSource;
-    }
+    /*
+     public Object getEventSource() {
+     return eventSource;
+     }
 
-    public void setEventSource(Object eventSource) {
-        this.eventSource = eventSource;
-    }
+     public void setEventSource(Object eventSource) {
+     this.eventSource = eventSource;
+     }
 
-    public String getEventIdentity() {
-        return eventIdentity;
-    }
+     public String getEventIdentity() {
+     return eventIdentity;
+     }
 
-    public void setEventIdentity(String eventIdentity) {
-        this.eventIdentity = eventIdentity;
-    }
+     public void setEventIdentity(String eventIdentity) {
+     this.eventIdentity = eventIdentity;
+     }
 
-    public String getEventAnnotation() {
-        return eventAnnotation;
-    }
+     public String getEventAnnotation() {
+     return eventAnnotation;
+     }
 
-    public void setEventAnnotation(String eventAnnotation) {
-        this.eventAnnotation = eventAnnotation;
-    }
-    */
-    
+     public void setEventAnnotation(String eventAnnotation) {
+     this.eventAnnotation = eventAnnotation;
+     }
+     */
 }

@@ -11,7 +11,6 @@ import event.EventBean;
  * @author epaln
  */
 public abstract class Aggregate {
-    
+
     protected abstract EventBean aggregate(EventBean[] evts);
-    
 }

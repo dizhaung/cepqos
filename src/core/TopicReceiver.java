@@ -7,7 +7,6 @@ package core;
 import com.google.common.collect.Queues;
 import core.pubsub.Subscriber;
 import event.EventBean;
-import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;

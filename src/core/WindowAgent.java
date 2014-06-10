@@ -27,21 +27,21 @@ public class WindowAgent extends EPAgent {
         super();
         _sourceStream = new DefaultObservable<EventBean>();
         this._info = info;
-        this._type = "WindowsAgent";
+        this._type = "Window";
         this._receiver = new TopicReceiver(this);
         inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver);
         outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type);
     }
 
     @Override
-    public Collection<IOTerminal> getInputTerminal() {
+    public Collection<IOTerminal> getInputTerminals() {
         ArrayList<IOTerminal> inputs = new ArrayList<IOTerminal>();
         inputs.add(inputTerminal);
         return inputs;
     }
 
     @Override
-    public Collection<IOTerminal> getOutputTerminal() {
+    public Collection<IOTerminal> getOutputTerminals() {
         ArrayList<IOTerminal> outputs = new ArrayList<>();
         outputs.add(outputTerminal);
         return outputs;
@@ -61,14 +61,18 @@ public class WindowAgent extends EPAgent {
     }
 
     @Override
-    public boolean select() {
+    public boolean fetch() {
         try {
-            for (EventBean evt : _receiver.getInputQueue().take()) {
-                _selectedEvents.add(evt);
-            }
+            _selectedEvents.add((EventBean) _receiver.getInputQueue().take());
         } catch (InterruptedException ex) {
-            Logger.getLogger(WindowAgent.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);
         }
         return !_selectedEvents.isEmpty();
     }
+    
+
+//    @Override
+//    public void process(EventBean[] evts) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
 }

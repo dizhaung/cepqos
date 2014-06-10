@@ -4,9 +4,13 @@
  */
 package client;
 
+import core.EPAgent;
+import core.IOTerminal;
 import core.pubsub.PubSubService;
 import core.pubsub.Subscriber;
 import event.EventBean;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jgroups.JChannel;
@@ -15,7 +19,7 @@ import org.jgroups.JChannel;
  *
  * @author epaln
  */
-public class EventConsumer implements Subscriber {
+public class EventConsumer extends EPAgent implements Subscriber {
 
     JChannel _channel;
     String _info, _input;
@@ -26,7 +30,10 @@ public class EventConsumer implements Subscriber {
         try {
             _info = info;
             _input = IDinputTerminal;
-            PubSubService.getInstance().subscribe(this, _input);
+            _type = "Consumer";
+            if (handler != null) {
+                PubSubService.getInstance().subscribe(this, _input);
+            }
         } catch (Exception ex) {
             Logger.getLogger(EventConsumer.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -37,4 +44,34 @@ public class EventConsumer implements Subscriber {
         EventBean[] evts = (EventBean[]) event;
         _handler.notify(evts);
     }
+
+    @Override
+    public Collection<IOTerminal> getInputTerminals() {
+        ArrayList<IOTerminal> inputs = new ArrayList<IOTerminal>();
+        inputs.add(new IOTerminal(_input, null));
+        return inputs;
+    }
+
+    @Override
+    public Collection<IOTerminal> getOutputTerminals() {
+        throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
+    public void process() {
+    }
+
+    @Override
+    public boolean fetch() {
+        return false;
+    }
+
+    @Override
+    public void run() {
+    }
+
+//    @Override
+//    public void process(EventBean[] evts) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
 }

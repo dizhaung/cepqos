@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Random;
+import objectexplorer.ObjectGraphMeasurer;
 import org.apache.commons.beanutils.BeanUtils;
+ 
 
 /**
  *
@@ -41,17 +43,22 @@ public class Simulator<T> extends Thread {
 
     @Override
     public void run() {
+        Random r = new Random();
+        
+        
         boolean isSimulating = false;
         producer = new EventProducer(typeName, _clazz);
         //System.out.println("generating events...");
         int i = 1;
         try {
+            Thread.sleep(r.nextInt((int)delay));
             while (true) {
 
                 if (!isSimulating) {
 
                     T evt = loader.getNext(); // get the next event if possible
                     if (evt != null) {
+                        System.out.println(ObjectGraphMeasurer.measure(evt));
                         producer.sendEvent(evt);
                         System.out.println(" next event generated... (N° " + i + "): " + evt);
                         i++;
@@ -95,6 +102,7 @@ public class Simulator<T> extends Thread {
                         BeanUtils.setProperty(evt, "timestampUTC", timestamp);
                         System.out.println(evt);
                         i++;
+                        
                         producer.sendEvent(evt);
                         Thread.sleep(delay);
                     }

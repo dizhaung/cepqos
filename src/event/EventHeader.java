@@ -5,38 +5,39 @@
 package event;
 
 import java.io.Serializable;
-import java.util.UUID;
 
 /**
  *
  * @author epaln
  */
-public class EventTypeHeader implements Serializable {
+public class EventHeader implements Serializable {
 
     // type description attribute
     private boolean isComposite = false;
     private String typeIdentifier;
     // header attribute indicators
-    private long occurenceTime; // interval ?
+    private long receptionTime; // interval ?
     private long detectionTime;
-    //private Object eventSource;
+    private long notificationTime;
+    private long productionTime;
+    private short priority = 0;
+    private String producerID;
     //private String eventIdentity; // UUID generated 
     //private String eventAnnotation; // human readable event description
 
-    public EventTypeHeader() {
+    public EventHeader() {
         //eventIdentity = UUID.randomUUID().toString();
     }
 
-    public EventTypeHeader(String typeIdentifier, long occurenceTime, long detectionTime, Object eventSource, String eventIdentity, String eventAnnotation) {
+    public EventHeader(String typeIdentifier, long detectionTime, Object eventSource, String eventIdentity, String eventAnnotation) {
         this.typeIdentifier = typeIdentifier;
-        this.occurenceTime = occurenceTime;
         this.detectionTime = detectionTime;
         //this.eventSource = eventSource;
         //this.eventIdentity = eventIdentity;
         //this.eventAnnotation = eventAnnotation;
     }
 
-    public boolean isIsComposite() {
+    public boolean isComposite() {
         return isComposite;
     }
 
@@ -52,12 +53,12 @@ public class EventTypeHeader implements Serializable {
         this.typeIdentifier = typeIdentifier;
     }
 
-    public long getOccurenceTime() {
-        return occurenceTime;
+    public long getReceptionTime() {
+        return receptionTime;
     }
 
-    public void setOccurenceTime(long occurenceTime) {
-        this.occurenceTime = occurenceTime;
+    public void setReceptionTime(long receptionTime) {
+        this.receptionTime = receptionTime;
     }
 
     public long getDetectionTime() {
@@ -67,14 +68,16 @@ public class EventTypeHeader implements Serializable {
     public void setDetectionTime(long detectionTime) {
         this.detectionTime = detectionTime;
     }
-    /*
-     public Object getEventSource() {
-     return eventSource;
-     }
 
-     public void setEventSource(Object eventSource) {
-     this.eventSource = eventSource;
-     }
+    public String getProducerID() {
+        return producerID;
+    }
+
+    public void setProducerID(String producerID) {
+        this.producerID = producerID;
+    }
+
+    /*
 
      public String getEventIdentity() {
      return eventIdentity;
@@ -92,4 +95,28 @@ public class EventTypeHeader implements Serializable {
      this.eventAnnotation = eventAnnotation;
      }
      */
+    public short getPriority() {
+        return priority;
+    }
+
+    public void setPriority(short priority) {
+        this.priority = priority;
+    }
+
+    public long getNotificationTime() {
+        return notificationTime;
+    }
+
+    public void setNotificationTime(long notificationTime) {
+        this.notificationTime = notificationTime;
+    }
+
+    public long getProductionTime() {
+        return productionTime;
+    }
+
+    public void setProductionTime(long productionTime) {
+        this.productionTime = productionTime;
+    }
+    
 }

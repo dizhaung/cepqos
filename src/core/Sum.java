@@ -12,9 +12,6 @@ import event.EventBean;
  */
 public class Sum extends Aggregate {
 
-    String _attribute;
-    String _aggAttribute;
-
     public Sum(String attribute, String aggregatedAttribute) {
 
         _attribute = attribute;
@@ -36,7 +33,7 @@ public class Sum extends Aggregate {
             sum += Double.parseDouble(evt.getValue(_attribute).toString());
         }
         EventBean evt = new EventBean();
-        evt.getHeader().setOccurenceTime(System.currentTimeMillis());
+        evt.getHeader().setDetectionTime(System.currentTimeMillis());
         evt.getHeader().setIsComposite(true);
         evt.getHeader().setTypeIdentifier("Sum(" + _attribute + ")");
         evt.payload.put(_aggAttribute, sum);

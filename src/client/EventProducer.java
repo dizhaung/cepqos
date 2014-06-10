@@ -5,6 +5,8 @@
 package client;
 
 import Exceptions.EventTypeException;
+import core.EPAgent;
+import core.IOTerminal;
 import core.pubsub.PubSubService;
 import core.pubsub.Relayer;
 import event.EventBean;
@@ -13,8 +15,11 @@ import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 //import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.MethodUtils;
 
@@ -22,7 +27,7 @@ import org.apache.commons.beanutils.MethodUtils;
  *
  * @author epaln
  */
-public class EventProducer {
+public class EventProducer extends EPAgent {
 
     private Class _clazz;
     private String _topicName;
@@ -30,7 +35,10 @@ public class EventProducer {
     public EventProducer(String typeName, Class clazz) {
         _clazz = clazz;
         _topicName = typeName;
-        declareEventType(typeName, clazz);
+        if (clazz != null) {
+            declareEventType(typeName, clazz);
+        }
+        _type = "Producer";
     }
 
     //private boolean declareEventType(String typeName, Class clazz) throws EventTypeException {
@@ -55,7 +63,7 @@ public class EventProducer {
             String type = EventTypeRepository.getInstance().findByValue(o.getClass());
             if (type != null) {
                 EventBean evt = new EventBean();
-                evt.getHeader().setOccurenceTime(System.currentTimeMillis());
+                evt.getHeader().setDetectionTime(System.currentTimeMillis());
                 evt.getHeader().setTypeIdentifier(type);
                 BeanInfo beanInfo = Introspector.getBeanInfo(o.getClass());
 
@@ -87,4 +95,34 @@ public class EventProducer {
             return false;
         }
     }
+
+    @Override
+    public void run() {
+    }
+
+    @Override
+    public Collection<IOTerminal> getInputTerminals() {
+        throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
+    public Collection<IOTerminal> getOutputTerminals() {
+        ArrayList<IOTerminal> outputs = new ArrayList<IOTerminal>();
+        outputs.add(new IOTerminal(_topicName, null));
+        return outputs;
+    }
+
+    @Override
+    public void process() {
+    }
+
+    @Override
+    public boolean fetch() {
+        return false;
+    }
+
+//    @Override
+//    public void process(EventBean[] evts) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//    }
 }

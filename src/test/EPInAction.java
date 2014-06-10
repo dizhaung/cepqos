@@ -37,30 +37,30 @@ public class EPInAction {
 
         // filter node
         FilterAgent filterA = new FilterAgent(null, "MeterEvent", "filterA");
-        filterA.addFilter(new EqualFilter("meterName", "b878"));
+        filterA.addFilter(new EqualFilter("meterID", "b878"));
         filterA.addFilter(new GreatherThanFilter("realPowerWatts", 0d));
 
         // window node
 
-        WindowHandler win = new TimeBatchWindow(10, TimeUnit.SECONDS);
-        WindowAgent windowA = new WindowAgent(null, "filterA", "window");
-        windowA.setWindowHandler(win);
+        //WindowHandler win = new TimeBatchWindow(10, TimeUnit.SECONDS);
+        //WindowAgent windowA = new WindowAgent(null, "filterA", "window");
+        //windowA.setWindowHandler(win);
 
         // aggregator node
-        AggregatorAgent aggrA = new AggregatorAgent(null, "window", "SumPwr");
-        Aggregate sum = new Sum("realPowerWatts", "sumPwr");
-        aggrA.setAggregator(sum);
+        //AggregatorAgent aggrA = new AggregatorAgent(null, "window", "SumPwr");
+        //Aggregate sum = new Sum("realPowerWatts", "sumPwr");
+        //aggrA.setAggregator(sum);
 
 
         // Open the Event processing network connections
         filterA.openIOchannels();
-        windowA.openIOchannels();
-        aggrA.openIOchannels();
+        //windowA.openIOchannels();
+        //aggrA.openIOchannels();
 
         // start the Event processing network
-        windowA.start();
+        //windowA.start();
         filterA.start();
-        aggrA.start();
+        //aggrA.start();
 
     }
 }

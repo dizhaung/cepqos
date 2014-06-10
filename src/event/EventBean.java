@@ -13,15 +13,15 @@ import java.util.HashMap;
  */
 public class EventBean implements Serializable {
 
-    EventTypeHeader header;
+    EventHeader header;
     public HashMap<String, Object> payload;
 
     public EventBean() {
-        header = new EventTypeHeader();
+        header = new EventHeader();
         payload = new HashMap<>();
     }
 
-    public EventTypeHeader getHeader() {
+    public EventHeader getHeader() {
         return header;
     }
 

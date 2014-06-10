@@ -29,21 +29,21 @@ public class FilterAgent extends EPAgent {
         super();
         //this._filter = filter;
         this._info = info;
-        this._type = "FilterAgent";
+        this._type = "Filter";
         this._receiver = new TopicReceiver(this);
         inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver);
         outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type);
     }
 
     @Override
-    public Collection<IOTerminal> getInputTerminal() {
+    public Collection<IOTerminal> getInputTerminals() {
         ArrayList<IOTerminal> inputs = new ArrayList<IOTerminal>();
         inputs.add(inputTerminal);
         return inputs;
     }
 
     @Override
-    public Collection<IOTerminal> getOutputTerminal() {
+    public Collection<IOTerminal> getOutputTerminals() {
         ArrayList<IOTerminal> outputs = new ArrayList<IOTerminal>();
         outputs.add(outputTerminal);
         return outputs;
@@ -69,7 +69,7 @@ public class FilterAgent extends EPAgent {
 
     @Override
     public void process() {
-        ArrayList<EventBean> toNotify = new ArrayList<>();
+        ArrayList<EventBean> toNotify = new ArrayList<>(); // turn this to an output queue...
         while (!_selectedEvents.isEmpty()) {
             boolean pass_filters = true;
 
@@ -98,11 +98,9 @@ public class FilterAgent extends EPAgent {
     }
 
     @Override
-    public boolean select() {
+    public boolean fetch() {
         try {
-            for (EventBean evt : _receiver.getInputQueue().take()) {
-                _selectedEvents.add(evt);
-            }
+            _selectedEvents.add((EventBean) _receiver.getInputQueue().take());
         } catch (InterruptedException ex) {
             Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -112,4 +110,35 @@ public class FilterAgent extends EPAgent {
     public void addFilter(Func1<EventBean, Boolean> filter) {
         this._filters.add(filter);
     }
+
+    /*
+     @Override
+     public void process(EventBean[] evts) {
+     ArrayList<EventBean> toNotify = new ArrayList<>();
+     for (EventBean evt:evts) {
+     boolean pass_filters = true;
+            
+     for (Func1<EventBean, Boolean> _filter : _filters) {
+     if (!_filter.invoke(evt)) {
+     pass_filters = false;
+     break;
+     }
+     }
+     if (pass_filters) {
+     toNotify.add(evt);
+     }
+     }
+     if (!toNotify.isEmpty()) {
+     boolean notified = false;
+     int attempt = 0;
+     do {
+     notified = notify(toNotify.toArray(new EventBean[1]));
+     attempt++;
+     } while (!notified && (attempt != COUNT));
+     if (attempt == COUNT) {
+     p("Notification error: " + toNotify.size() + " events not notified :(");
+     }
+     }
+     }
+     * */
 }

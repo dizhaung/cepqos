@@ -34,15 +34,19 @@ public class AggregatorAgent extends EPAgent {
         this.aggregator = aggregator;
     }
 
+    public Aggregate getAggregator() {
+        return aggregator;
+    }
+
     @Override
-    public Collection<IOTerminal> getInputTerminal() {
+    public Collection<IOTerminal> getInputTerminals() {
         ArrayList<IOTerminal> inputs = new ArrayList<IOTerminal>();
         inputs.add(inputTerminal);
         return inputs;
     }
 
     @Override
-    public Collection<IOTerminal> getOutputTerminal() {
+    public Collection<IOTerminal> getOutputTerminals() {
         ArrayList<IOTerminal> outputs = new ArrayList<IOTerminal>();
         outputs.add(outputTerminal);
         return outputs;
@@ -61,14 +65,19 @@ public class AggregatorAgent extends EPAgent {
     }
 
     @Override
-    public boolean select() {
-        try {
-            for (EventBean evt : _receiver.getInputQueue().take()) {
-                _selectedEvents.add(evt);
-            }
+    public boolean fetch() {
+       try {
+            _selectedEvents.add((EventBean) _receiver.getInputQueue().take());
         } catch (InterruptedException ex) {
-            Logger.getLogger(AggregatorAgent.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);
         }
         return !_selectedEvents.isEmpty();
     }
+
+    /*
+    @Override
+    public void process(EventBean[] evts) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    * */
 }

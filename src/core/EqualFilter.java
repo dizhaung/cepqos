@@ -24,7 +24,11 @@ public class EqualFilter implements Func1<EventBean, Boolean> {
     @Override
     public Boolean invoke(EventBean evt) {
         Object val = evt.payload.get(_attributeName);
-        return val.equals(_value);
+        if(val!=null){
+            return val.equals(_value);
+        }
+        return false;
+        
         /*
          if(val instanceof Integer){
          int castedVal = (int)val;

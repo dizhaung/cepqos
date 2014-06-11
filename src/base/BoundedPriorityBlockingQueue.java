@@ -13,7 +13,7 @@ import java.util.concurrent.PriorityBlockingQueue;
  *
  * @author epaln
  */
-public class BoundedPriorityBlockingQueue extends PriorityBlockingQueue {
+public class BoundedPriorityBlockingQueue extends PriorityBlockingQueue<EventBean> {
 
     private int _capacity = 1000;
     public static final short REPLACE = 0;
@@ -30,7 +30,7 @@ public class BoundedPriorityBlockingQueue extends PriorityBlockingQueue {
     }
 
     @Override
-    public boolean offer(Object e) {
+    public boolean offer(EventBean e) {
         if (this.size() == _capacity) {
             if (strategy == IGNORE) {
                 return false;
@@ -39,7 +39,7 @@ public class BoundedPriorityBlockingQueue extends PriorityBlockingQueue {
                 if (!success) {
                     return false;
                 } else {
-                    EventBean[] items = (EventBean[]) this.toArray(new EventBean[1]);
+                    EventBean[] items = (EventBean[]) this.toArray(new EventBean[0]);
                     Arrays.sort(items, new EventComparator());
                     this.remove(items[items.length-1]);
                     return true;

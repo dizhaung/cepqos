@@ -21,12 +21,14 @@ public abstract class EPAgent extends Thread {
     protected String _info;
     protected Queue<EventBean> _selectedEvents; 
     protected BoundedPriorityBlockingQueue _outputQueue;
+    public int TTL; // ttl value, which respect to the starvation problem...
+    protected OQNotifier _outputNotifier;
 
     // private boolean _process = false;
     public EPAgent() {
         _selectedEvents = Queues.newArrayDeque();
         _outputQueue = new BoundedPriorityBlockingQueue();
-
+        TTL = _outputQueue.getCapacity()*2; // avoiding starvation after two time the capacity of the output queue
     }
 
     public BoundedPriorityBlockingQueue getOutputQueue() {
@@ -75,14 +77,6 @@ public abstract class EPAgent extends Thread {
         return true;
     }
 
-    /*
-     public void signal(int i) {
-        
-     synchronized (_mutex) {
-     _process = true;
-     }
-     }
-     */
     @Override
     public void run() {
         while (true) {
@@ -90,6 +84,15 @@ public abstract class EPAgent extends Thread {
                 process();
             }
         }
+    }
+
+    
+    public int getTTL() {
+        return TTL;
+    }
+
+    public OQNotifier getOutputNotifier() {
+        return _outputNotifier;
     }
 
     public String getType() {

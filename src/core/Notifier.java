@@ -14,18 +14,18 @@ import java.util.logging.Logger;
  */
 public class Notifier extends Thread {
 
-    EventBean[] _evts;
+    EventBean[] _evt;
     IOTerminal _output;
 
-    public Notifier(EventBean[] evts, IOTerminal output) {
-        _evts = evts;
+    public Notifier(EventBean[] evt, IOTerminal output) {
+        _evt = evt;
         _output = output;
     }
 
     @Override
     public void run() {
         try {
-            _output.send(_evts);
+            _output.send(_evt);
         } catch (Exception ex) {
             Logger.getLogger(Notifier.class.getName()).log(Level.SEVERE, null, ex);
         }

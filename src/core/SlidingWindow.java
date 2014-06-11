@@ -23,6 +23,7 @@ public class SlidingWindow extends WindowHandler {
     TimeUnit _unit;
     long _timespan;
     long _timeshift;
+    //int sumPriority =0;
 
     public SlidingWindow(long timespan, long timeshift, TimeUnit timeUnit) {
         this._unit = timeUnit;
@@ -33,6 +34,7 @@ public class SlidingWindow extends WindowHandler {
     @Override
     public void register(WindowAgent agent) {
         _wagent = agent;
+        
         Observable<Observable<EventBean>> windows = Reactive.window(_wagent._sourceStream, _timespan, _timeshift, _unit);
 
         windows.register(new ObserverAdapter<Observable<EventBean>>() {
@@ -45,16 +47,31 @@ public class SlidingWindow extends WindowHandler {
                     @Override
                     public void next(EventBean evt) {
                         res.add(evt);
+                        //sumPriority+= evt.getHeader().getPriority();
                     }
 
                     @Override
                     public void finish() {
+                        
                         if (!res.isEmpty()) {
                             EventBean[] evts;
-                            evts = res.toArray(new EventBean[1]);
+                            evts = res.toArray(new EventBean[0]);
                             res.clear();
-                            notifier = new Notifier(evts, _wagent.outputTerminal);
-                            notifier.start();
+                            EventBean evt = new EventBean();
+                            evt.payload.put("window", evts);
+                            evt.getHeader().setIsComposite(true);
+                            evt.getHeader().setProductionTime(System.currentTimeMillis());
+                            evt.getHeader().setDetectionTime(evt.getHeader().getProductionTime());
+                            evt.getHeader().setTypeIdentifier("Window");
+                            evt.getHeader().setProducerID(_wagent.getName());
+                            //evt.getHeader().setPriority((short)Math.round(sumPriority/evts.length));
+                            evt.getHeader().setPriority((short)1);
+                            evt.payload.put("ttl", _wagent.TTL);
+                            //sumPriority=0;
+                            _wagent.getOutputQueue().put(evt);
+                            _wagent.getOutputNotifier().run();
+                          //  notifier = new Notifier(evts, _wagent.outputTerminal);
+                           // notifier.start();
                         }
                     }
                 });

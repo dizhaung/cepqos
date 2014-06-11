@@ -31,6 +31,7 @@ public class WindowAgent extends EPAgent {
         this._receiver = new TopicReceiver(this);
         inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver);
         outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type);
+        _outputNotifier = new OQNotifier(outputTerminal, _outputQueue, OQNotifier.PRIORITY);
     }
 
     @Override
@@ -69,7 +70,6 @@ public class WindowAgent extends EPAgent {
         }
         return !_selectedEvents.isEmpty();
     }
-    
 
 //    @Override
 //    public void process(EventBean[] evts) {

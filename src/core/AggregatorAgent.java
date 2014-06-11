@@ -28,6 +28,7 @@ public class AggregatorAgent extends EPAgent {
         this._receiver = new TopicReceiver(this);
         inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver);
         outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type);
+        _outputNotifier = new OQNotifier(outputTerminal, _outputQueue, OQNotifier.PRIORITY);
     }
 
     public void setAggregator(Aggregate aggregator) {
@@ -54,14 +55,21 @@ public class AggregatorAgent extends EPAgent {
 
     @Override
     public void process() {
-        EventBean evt = aggregator.aggregate(_selectedEvents.toArray(new EventBean[1]));
-        _selectedEvents.clear();
-        EventBean[] evts = {evt};
-        try {
-            outputTerminal.send(evts);
-        } catch (Exception ex) {
-            Logger.getLogger(AggregatorAgent.class.getName()).log(Level.SEVERE, null, ex);
+        //EventBean evt = aggregator.aggregate(_selectedEvents.toArray(new EventBean[0]));
+        EventBean[] operands;
+        EventBean evt = _selectedEvents.remove();
+        if(evt.getHeader().getTypeIdentifier().equals("Window")){
+            operands = (EventBean[]) evt.getValue("window");
         }
+        else{
+             operands = new EventBean[1];
+             operands[0]=evt;
+        }
+         evt = aggregator.aggregate(operands);
+         evt.payload.put("ttl", TTL);
+        _selectedEvents.clear();
+        _outputQueue.put(evt);
+        _outputNotifier.run();
     }
 
     @Override

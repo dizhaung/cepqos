@@ -39,9 +39,10 @@ public class TopicReceiver implements Subscriber {
     @Override
     public void notify(Object event) {
         EventBean[] evts = (EventBean[]) event;
-        for(EventBean evt: evts){
-           _inputQueue.put((EventBean)event); 
+         for(EventBean evt: evts){
+           _inputQueue.put(evt); 
         }
+       
         //_epAgent.process(evts);
     }
 }

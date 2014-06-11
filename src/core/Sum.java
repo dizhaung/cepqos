@@ -28,16 +28,18 @@ public class Sum extends Aggregate {
      */
     @Override
     protected EventBean aggregate(EventBean[] evts) {
-        double sum = 0;
+        double sum = 0; int sumPriority =0;
         for (EventBean evt : evts) {
             sum += Double.parseDouble(evt.getValue(_attribute).toString());
+            sumPriority+= evt.getHeader().getPriority();
         }
         EventBean evt = new EventBean();
         evt.getHeader().setDetectionTime(System.currentTimeMillis());
         evt.getHeader().setIsComposite(true);
+        evt.getHeader().setProductionTime(System.currentTimeMillis());
         evt.getHeader().setTypeIdentifier("Sum(" + _attribute + ")");
         evt.payload.put(_aggAttribute, sum);
-
+        evt.getHeader().setPriority((short)Math.round(sumPriority/evts.length));
         return evt;
     }
 }

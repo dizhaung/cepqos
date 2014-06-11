@@ -32,7 +32,7 @@ import org.jgroups.util.Util;
  * @author epaln
  */
 public class Relayer {
-
+    
     private Channel channel;
     private RpcDispatcher disp;
     private String props = "udp.xml", CLUSTER = "PubSub";
@@ -41,30 +41,28 @@ public class Relayer {
     private RequestOptions opts;
     private static final int DELAY = 5000;
     private ConcurrentHashMap<String, HashSet<Address>> addressTable;
-
+    
     private Relayer() {
         addressTable = new ConcurrentHashMap<>();
-        System.out.println("Starting the Publish/Subscribe middleware...");
-        long time = System.currentTimeMillis();
         try {
             channel = new JChannel(props);
             channel.setDiscardOwnMessages(true);
             MembershipListener l = new MembershipListener() {
                 @Override
                 public void viewAccepted(View view) {
-
+                    
                     System.out.println("** view: " + view);
                 }
-
+                
                 @Override
                 public void suspect(Address suspected_mbr) {
                     System.out.println(" Suspected member: " + suspected_mbr);
                 }
-
+                
                 @Override
                 public void block() {
                 }
-
+                
                 @Override
                 public void unblock() {
                 }
@@ -72,15 +70,16 @@ public class Relayer {
             MessageListener m = new MessageListener() {
                 @Override
                 public void receive(Message msg) {
+                    
                 }
-
+                
                 @Override
                 public void getState(OutputStream output) throws Exception {
                     synchronized (addressTable) {
                         Util.objectToStream(addressTable, new DataOutputStream(output));
                     }
                 }
-
+                
                 @Override
                 public void setState(InputStream input) throws Exception {
                     ConcurrentHashMap<String, HashSet<Address>> chm = (ConcurrentHashMap<String, HashSet<Address>>) Util.objectFromStream(new DataInputStream(input));
@@ -88,20 +87,19 @@ public class Relayer {
                         addressTable.clear();
                         addressTable.putAll(chm);
                     }
-                    System.out.println("State transfer (OK)");
+                    //System.out.println("State transfer : OK");
                 }
             };
             disp = new RpcDispatcher(channel, m, l, this);
             //call = new MethodCall(getClass().getMethod("publish", EventBean[].class, String.class));
             opts = new RequestOptions(ResponseMode.GET_NONE, DELAY).setFlags(Flag.DONT_BUNDLE);
             channel.connect(CLUSTER);
-            System.out.println("Publish/Subscribe middleware started ("+ (System.currentTimeMillis()- time)+ " ms).");
             channel.getState(null, DELAY);
         } catch (Exception ex) {
             Logger.getLogger(Relayer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    
     public boolean publish(EventBean[] evts, String topic) {
         return PubSubService.getInstance().publish(evts, topic);
     }
@@ -121,7 +119,7 @@ public class Relayer {
          }
          * */
     }
-
+    
     public void advertise(String topic, Address addr) {
         HashSet<Address> addrs = addressTable.get(topic);
         if (addrs == null) {
@@ -132,25 +130,25 @@ public class Relayer {
             addrs.add(addr);
         }
     }
-
+    
     public void callAdvertise(String topic, Address addr) {
         try {
             call = new MethodCall(getClass().getMethod("advertise", String.class, Address.class));
             call.setArgs(topic, addr);
             disp.callRemoteMethods(null, call, opts);
-
+            
         } catch (Exception ex) {
             Logger.getLogger(Relayer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
+    
     public static Relayer getInstance() {
         if (_instance == null) {
             _instance = new Relayer();
         }
         return _instance;
     }
-
+    
     public Address getAddress() {
         return channel.getAddress();
     }

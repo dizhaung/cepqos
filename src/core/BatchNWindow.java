@@ -46,10 +46,21 @@ public class BatchNWindow extends WindowHandler {
                     public void finish() {
                         if (!res.isEmpty()) {
                             EventBean[] evts;
-                            evts = res.toArray(new EventBean[1]);
+                            evts = res.toArray(new EventBean[0]);
                             res.clear();
-                            notifier = new Notifier(evts, _wagent.outputTerminal);
-                            notifier.start();
+                            EventBean evt = new EventBean();
+                            evt.payload.put("window", evts);
+                            evt.getHeader().setIsComposite(true);
+                            evt.getHeader().setProductionTime(System.currentTimeMillis());
+                            evt.getHeader().setDetectionTime(evt.getHeader().getProductionTime());
+                            evt.getHeader().setTypeIdentifier("Window");
+                            evt.getHeader().setProducerID(_wagent.getName());
+                            evt.getHeader().setPriority((short)1);
+                            evt.payload.put("ttl", _wagent.TTL);
+                            _wagent.getOutputQueue().put(evt);
+                            _wagent.getOutputNotifier().run();
+                            //notifier = new Notifier(evts, _wagent.outputTerminal);
+                            //notifier.start();
                         }
                     }
                 });

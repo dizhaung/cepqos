@@ -33,6 +33,7 @@ public class FilterAgent extends EPAgent {
         this._receiver = new TopicReceiver(this);
         inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver);
         outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type);
+         _outputNotifier = new OQNotifier(outputTerminal, _outputQueue, OQNotifier.PRIORITY);
     }
 
     @Override
@@ -69,7 +70,7 @@ public class FilterAgent extends EPAgent {
 
     @Override
     public void process() {
-        ArrayList<EventBean> toNotify = new ArrayList<>(); // turn this to an output queue...
+        //ArrayList<EventBean> toNotify = new ArrayList<>(); // turn this to an output queue...
         while (!_selectedEvents.isEmpty()) {
             boolean pass_filters = true;
 
@@ -81,19 +82,16 @@ public class FilterAgent extends EPAgent {
                 }
             }
             if (pass_filters) {
-                toNotify.add(evt);
+                evt.getHeader().setProductionTime(System.currentTimeMillis());
+                evt.payload.put("ttl", TTL);
+                _outputQueue.put(evt);
+                //toNotify.add(evt);
+                // notify?
             }
         }
-        if (!toNotify.isEmpty()) {
-            boolean notified = false;
-            int attempt = 0;
-            do {
-                notified = notify(toNotify.toArray(new EventBean[1]));
-                attempt++;
-            } while (!notified && (attempt != COUNT));
-            if (attempt == COUNT) {
-                p("Notification error: " + toNotify.size() + " events not notified :(");
-            }
+        
+        if (!_outputQueue.isEmpty()) {
+            _outputNotifier.run();
         }
     }
 
@@ -132,7 +130,7 @@ public class FilterAgent extends EPAgent {
      boolean notified = false;
      int attempt = 0;
      do {
-     notified = notify(toNotify.toArray(new EventBean[1]));
+     notified = notify(toNotify.toArray(new EventBean[0]));
      attempt++;
      } while (!notified && (attempt != COUNT));
      if (attempt == COUNT) {

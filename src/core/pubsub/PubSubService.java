@@ -30,7 +30,7 @@ public class PubSubService {
      * @param topic the topic to publish to
      *
      */
-    public boolean publish(Object evt, String topic) {
+    public long publish(Object evt, String topic) {
         EventBus eBus;
         if (!_topicBus.containsKey(topic)) {
             eBus = new EventBus();
@@ -41,7 +41,7 @@ public class PubSubService {
         if (evt != null) {
             eBus.post(evt);
         }
-        return true;
+        return System.currentTimeMillis();
     }
 
     /**

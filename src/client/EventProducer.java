@@ -65,6 +65,9 @@ public class EventProducer extends EPAgent {
                 EventBean evt = new EventBean();
                 evt.getHeader().setDetectionTime(System.currentTimeMillis());
                 evt.getHeader().setTypeIdentifier(type);
+                evt.getHeader().setPriority((short)0);
+                evt.getHeader().setProductionTime(System.currentTimeMillis());
+                evt.getHeader().setProducerID(this.getName());
                 BeanInfo beanInfo = Introspector.getBeanInfo(o.getClass());
 
                 PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
@@ -82,6 +85,8 @@ public class EventProducer extends EPAgent {
                         evt.payload.put(attribute, value);
                     }
                 }
+                
+                         
                 EventBean[] evts = {evt};
                 PubSubService.getInstance().publish(evts, _topicName); // publish locally
                 Relayer.getInstance().callPublish(evts, _topicName);  // publish remotely                

@@ -4,10 +4,12 @@
  */
 package base;
 
+import core.EPAgent;
 import event.EventBean;
 import event.EventComparator;
 import java.util.Arrays;
 import java.util.concurrent.PriorityBlockingQueue;
+import qosmonitor.QoSTuner;
 
 /**
  *
@@ -16,25 +18,31 @@ import java.util.concurrent.PriorityBlockingQueue;
 public class BoundedPriorityBlockingQueue extends PriorityBlockingQueue<EventBean> {
 
     private int _capacity = 1000;
-    public static final short REPLACE = 0;
-    public static final short IGNORE = 1;
-    private short strategy = REPLACE;
+    
+    private short strategy = QoSTuner.QUEUE_REPLACE;
+    private EPAgent _agent;
+    
 
-    public BoundedPriorityBlockingQueue() {
-       this(1000);
+    public BoundedPriorityBlockingQueue(EPAgent agent) {
+       this(1000, agent);
     }
 
-    public BoundedPriorityBlockingQueue(int maxCapacity) {
+    public BoundedPriorityBlockingQueue(int maxCapacity, EPAgent agent) {
         super(maxCapacity, new EventComparator());
-        _capacity = maxCapacity;
+        _capacity = maxCapacity; 
+        _agent = agent;
     }
 
     @Override
     public boolean offer(EventBean e) {
         if (this.size() == _capacity) {
-            if (strategy == IGNORE) {
+            if (strategy == QoSTuner.QUEUE_IGNORE) {
                 return false;
-            } else { // strategy = REPLACE
+            }else if(strategy==QoSTuner.QUEUE_NOTIFY){
+                _agent.getOutputNotifier().run();
+                return super.offer(e);
+            } 
+            else { // strategy = REPLACE
                 boolean success = super.offer(e);
                 if (!success) {
                     return false;

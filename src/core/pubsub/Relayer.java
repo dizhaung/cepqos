@@ -25,6 +25,8 @@ import org.jgroups.blocks.MethodCall;
 import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.ResponseMode;
 import org.jgroups.blocks.RpcDispatcher;
+import org.jgroups.util.Rsp;
+import org.jgroups.util.RspList;
 import org.jgroups.util.Util;
 
 /**
@@ -92,7 +94,7 @@ public class Relayer {
             };
             disp = new RpcDispatcher(channel, m, l, this);
             //call = new MethodCall(getClass().getMethod("publish", EventBean[].class, String.class));
-            opts = new RequestOptions(ResponseMode.GET_NONE, DELAY).setFlags(Flag.DONT_BUNDLE);
+            opts = new RequestOptions(ResponseMode.GET_FIRST, DELAY).setFlags(Flag.DONT_BUNDLE);
             channel.connect(CLUSTER);
             channel.getState(null, DELAY);
         } catch (Exception ex) {
@@ -100,7 +102,7 @@ public class Relayer {
         }
     }
     
-    public boolean publish(EventBean[] evts, String topic) {
+    public long publish(EventBean[] evts, String topic) {
         return PubSubService.getInstance().publish(evts, topic);
     }
 
@@ -108,7 +110,18 @@ public class Relayer {
     public synchronized void callPublish(EventBean[] evts, String topic) throws Exception {
         call = new MethodCall(getClass().getMethod("publish", EventBean[].class, String.class));
         call.setArgs(evts, topic);
-        disp.callRemoteMethods(addressTable.get(topic), call, opts);
+        RspList<Object> rsps = disp.callRemoteMethods(addressTable.get(topic), call, opts);
+        for (Rsp rsp : rsps.values()) {
+
+         if (!rsp.wasUnreachable()) {
+         //System.out.println("<< unreachable: " + rsp.getSender());
+             long receptionTime = (long)rsp.getValue();
+             for(EventBean e:evts){
+                 System.out.println("latency:"+ (receptionTime-e.getHeader().getProductionTime())); 
+             }  
+         } 
+
+         }
         /*  RspList<Object> rsps = disp.callRemoteMethods(null, call, opts);
          for (Rsp rsp : rsps.values()) {
 

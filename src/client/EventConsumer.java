@@ -40,7 +40,7 @@ public class EventConsumer extends EPAgent implements Subscriber {
     }
 
     @Override
-    public void notify(Object event) {
+    public synchronized void notify(Object event) {
         EventBean[] evts = (EventBean[]) event;
         _handler.notify(evts);
     }

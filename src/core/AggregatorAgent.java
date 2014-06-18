@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import qosmonitor.QoSTuner;
 
 /**
  *
@@ -28,7 +29,7 @@ public class AggregatorAgent extends EPAgent {
         this._receiver = new TopicReceiver(this);
         inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver);
         outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type);
-        _outputNotifier = new OQNotifier(outputTerminal, _outputQueue, OQNotifier.PRIORITY);
+        _outputNotifier = new OQNotifier(outputTerminal, _outputQueue, QoSTuner.NOTIFICATION_PRIORITY);
     }
 
     public void setAggregator(Aggregate aggregator) {

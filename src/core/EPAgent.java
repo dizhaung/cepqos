@@ -27,7 +27,7 @@ public abstract class EPAgent extends Thread {
     // private boolean _process = false;
     public EPAgent() {
         _selectedEvents = Queues.newArrayDeque();
-        _outputQueue = new BoundedPriorityBlockingQueue();
+        _outputQueue = new BoundedPriorityBlockingQueue(this);
         TTL = _outputQueue.getCapacity()*2; // avoiding starvation after two time the capacity of the output queue
     }
 

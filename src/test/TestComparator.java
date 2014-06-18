@@ -10,6 +10,7 @@ import event.EventComparator;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import qosmonitor.QoSTuner;
 
 /**
  *
@@ -21,8 +22,8 @@ public class TestComparator {
    
     
     public static void main(String[] args){
-        BoundedPriorityBlockingQueue bpbq =new BoundedPriorityBlockingQueue(2);
-        bpbq.setStrategy(BoundedPriorityBlockingQueue.IGNORE);
+        BoundedPriorityBlockingQueue bpbq =new BoundedPriorityBlockingQueue(2,null);
+        bpbq.setStrategy(QoSTuner.QUEUE_IGNORE);
          
         evts[0] = new EventBean();
         evts[1] = new EventBean();

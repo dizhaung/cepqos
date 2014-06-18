@@ -14,9 +14,9 @@ import event.EventBean;
  */
 public class IOTerminal {
 
-    String _topic;
-    String description;
-    TopicReceiver _receiver = null;
+    private String _topic;
+    private String description;
+    private TopicReceiver _receiver = null;
 
     public IOTerminal(String topic, String description, TopicReceiver receiver) {
         this._topic = topic;
@@ -28,6 +28,11 @@ public class IOTerminal {
         this(id, description, null);
     }
 
+    public TopicReceiver getReceiver() {
+        return _receiver;
+    }
+
+    
     public boolean open() {
 
         if (_receiver != null) {
@@ -49,6 +54,7 @@ public class IOTerminal {
 
     public void send(EventBean[] e) throws Exception {
         PubSubService.getInstance().publish(e, _topic); // publish locally
+        // compute the latency of evts notified locally?
         Relayer.getInstance().callPublish(e, _topic);  // publish remotely
     }
 }

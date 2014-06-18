@@ -23,7 +23,7 @@ public class TopicReceiver implements Subscriber {
     public TopicReceiver(EPAgent _epAgent) {
         this._epAgent = _epAgent;
         //_inputQueue = Queues.newLinkedBlockingQueue();
-        _inputQueue = new BoundedPriorityBlockingQueue();
+        _inputQueue = new BoundedPriorityBlockingQueue(null);
     }
 
     /*
@@ -35,11 +35,12 @@ public class TopicReceiver implements Subscriber {
         return _inputQueue;
     }
     
-    
     @Override
     public void notify(Object event) {
         EventBean[] evts = (EventBean[]) event;
          for(EventBean evt: evts){
+            evt.getHeader().setReceptionTime(System.currentTimeMillis());
+             //System.out.println("ProducerID:"+evt.getHeader().getProducerID()+"; type:"+evt.getHeader().getTypeIdentifier()+"; latency: "+ (evt.getHeader().getReceptionTime()-evt.getHeader().getProductionTime()) );
            _inputQueue.put(evt); 
         }
        

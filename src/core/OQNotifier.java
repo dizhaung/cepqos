@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import qosmonitor.QoSTuner;
 
 /**
  *
@@ -17,18 +18,20 @@ import java.util.logging.Logger;
  */
 public class OQNotifier implements Runnable {
 
-    public static final short PRIORITY = 0;
-    public static final short BATCH = 1;
     private short _strategy;
     private BoundedPriorityBlockingQueue _outputQ;
     private IOTerminal _ioTerm;
     private int batch_size = 20;
     private long timeout = 600000;
-    
+    //ScheduledExecutorService scheduledExecutorService;
+    //ScheduledFuture scheduledFuture = null;
+
     public OQNotifier(IOTerminal ioTerm, BoundedPriorityBlockingQueue outputQ, short strategy) {
         _strategy = strategy;
         _outputQ = outputQ;
         _ioTerm = ioTerm;
+       // scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+
     }
 
     public short getStrategy() {
@@ -45,6 +48,9 @@ public class OQNotifier implements Runnable {
 
     public void setBatch_size(int batch_size) {
         this.batch_size = batch_size;
+        if (batch_size > _outputQ.getCapacity()) {
+            batch_size = _outputQ.getCapacity();
+        }
     }
 
     public long getTimeout() {
@@ -54,7 +60,7 @@ public class OQNotifier implements Runnable {
     public void setTimeout(long timeout) {
         this.timeout = timeout;
     }
-    
+
     @Override
     public void run() {
         try {
@@ -62,51 +68,79 @@ public class OQNotifier implements Runnable {
             if (evts.length > 0) {
                 _ioTerm.send(evts);
             }
-            if(_strategy==PRIORITY){ // default strategy
+            if (_strategy == QoSTuner.NOTIFICATION_PRIORITY) { // default strategy
                 evts = new EventBean[1];
-                evts[0]= (EventBean) _outputQ.take();
+                evts[0] = (EventBean) _outputQ.take();
                 evts[0].getHeader().setNotificationTime(System.currentTimeMillis());
                 _ioTerm.send(evts);
-            }
-            else if(_strategy==BATCH){
-                if(_outputQ.size()>= batch_size){
+            } else if (_strategy == QoSTuner.NOTIFICATION_BATCH) {
+                /*
+                if (scheduledFuture != null) {
+                    scheduledFuture.cancel(false);
+                }
+                * */
+
+                if (_outputQ.size() >= batch_size) {
                     List<EventBean> batch = new ArrayList<EventBean>();
-                    for(EventBean evt: batch){
+                    _outputQ.drainTo(batch, batch_size);
+                    for (EventBean evt : batch) {
                         evt.getHeader().setNotificationTime(System.currentTimeMillis());
                     }
-                     _outputQ.drainTo(batch, batch_size);
-                     evts = (EventBean[]) batch.toArray(new EventBean[0]);
-                     _ioTerm.send(evts);
+                    evts = (EventBean[]) batch.toArray(new EventBean[0]);
+                    _ioTerm.send(evts);
+                } 
+               /* else { // notify after the timeout has elapsed...
+                    scheduledFuture =
+                            scheduledExecutorService.schedule(new Callable() {
+                        public Object call() throws Exception {
+                            List<EventBean> batch = new ArrayList<EventBean>();
+                            _outputQ.drainTo(batch);
+                            for (EventBean evt : batch) {
+                                evt.getHeader().setNotificationTime(System.currentTimeMillis());
+                            }
+                            EventBean[] evs = (EventBean[]) batch.toArray(new EventBean[0]);
+                            _ioTerm.send(evs);
+                            return "(INFO) Notification achieved after timeout (" + timeout + " ms) elapsed: " + evs.length + " events.";
+                        }
+                    },
+                            timeout,
+                            TimeUnit.MILLISECONDS);
+
+                    System.out.println(scheduledFuture.get());
                 }
+                */
             }
-            
+
             decreaseAllTTLs();
-            
+
         } catch (Exception ex) {
             Logger.getLogger(OQNotifier.class.getName()).log(Level.SEVERE, null, ex);
         }
+        //scheduledExecutorService.shutdown();
     }
 
     /**
-     * retrieve the events for which the ttl value equals zero, setting their notification time to System.currentTimeMillis();
-     * @return 
+     * retrieve the events for which the ttl value equals zero, setting their
+     * notification time to System.currentTimeMillis();
+     *
+     * @return
      */
     private EventBean[] retrieveZeroTTLs() {
-        ArrayList<EventBean> zeroTTLs= new ArrayList<>();
-        for (EventBean evt: _outputQ){
-            if((int)evt.getValue("ttl")==0){
+        ArrayList<EventBean> zeroTTLs = new ArrayList<>();
+        for (EventBean evt : _outputQ) {
+            if ((int) evt.getValue("ttl") == 0) {
                 evt.getHeader().setNotificationTime(System.currentTimeMillis());
                 zeroTTLs.add(evt);
                 _outputQ.remove(evt);
             }
         }
-        EventBean[] evts= (EventBean[]) zeroTTLs.toArray(new EventBean[0]);
+        EventBean[] evts = (EventBean[]) zeroTTLs.toArray(new EventBean[0]);
         return evts;
     }
-    
-    private void decreaseAllTTLs(){
-        for(EventBean evt: _outputQ){
-            evt.payload.put("ttl", ((int)(evt.getValue("ttl"))-1));
+
+    private void decreaseAllTTLs() {
+        for (EventBean evt : _outputQ) {
+            evt.payload.put("ttl", ((int) (evt.getValue("ttl")) - 1));
         }
     }
 }

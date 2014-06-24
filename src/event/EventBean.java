@@ -6,6 +6,7 @@ package event;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
@@ -14,11 +15,11 @@ import java.util.HashMap;
 public class EventBean implements Serializable {
 
     EventHeader header;
-    public HashMap<String, Object> payload;
+    public ConcurrentHashMap<String, Object> payload;
 
     public EventBean() {
         header = new EventHeader();
-        payload = new HashMap<>();
+        payload = new ConcurrentHashMap<>();
     }
 
     public EventHeader getHeader() {

@@ -58,7 +58,7 @@ public class Simulator<T> extends Thread {
 
                     T evt = loader.getNext(); // get the next event if possible
                     if (evt != null) {
-                        System.out.println(ObjectGraphMeasurer.measure(evt));
+                        //System.out.println(ObjectGraphMeasurer.measure(evt));
                         producer.sendEvent(evt);
                         System.out.println(" next event generated... (N° " + i + "): " + evt);
                         i++;

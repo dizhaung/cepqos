@@ -30,8 +30,8 @@ public class WindowAgent extends EPAgent {
         this._info = info;
         this._type = "Window";
         this._receiver = new TopicReceiver(this);
-        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver);
-        outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type);
+        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver, this);
+        outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type, this);
         _outputNotifier = new OQNotifier(outputTerminal, _outputQueue, QoSTuner.NOTIFICATION_PRIORITY);
     }
 
@@ -43,10 +43,8 @@ public class WindowAgent extends EPAgent {
     }
 
     @Override
-    public Collection<IOTerminal> getOutputTerminals() {
-        ArrayList<IOTerminal> outputs = new ArrayList<>();
-        outputs.add(outputTerminal);
-        return outputs;
+    public IOTerminal getOutputTerminal() {
+        return outputTerminal;
     }
 
     public void setWindowHandler(WindowHandler handler) {

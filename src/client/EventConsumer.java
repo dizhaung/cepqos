@@ -48,12 +48,12 @@ public class EventConsumer extends EPAgent implements Subscriber {
     @Override
     public Collection<IOTerminal> getInputTerminals() {
         ArrayList<IOTerminal> inputs = new ArrayList<IOTerminal>();
-        inputs.add(new IOTerminal(_input, null));
+        inputs.add(new IOTerminal(_input, null, this));
         return inputs;
     }
 
     @Override
-    public Collection<IOTerminal> getOutputTerminals() {
+    public IOTerminal getOutputTerminal() {
         throw new UnsupportedOperationException("Not supported.");
     }
 

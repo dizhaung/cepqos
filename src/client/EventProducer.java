@@ -89,7 +89,7 @@ public class EventProducer extends EPAgent {
                          
                 EventBean[] evts = {evt};
                 PubSubService.getInstance().publish(evts, _topicName); // publish locally
-                Relayer.getInstance().callPublish(evts, _topicName);  // publish remotely                
+                Relayer.getInstance().callPublish(evts, this);  // publish remotely                
                 return true;
             } else {
                 throw new EventTypeException("The underlying event type has not been registered");
@@ -111,10 +111,8 @@ public class EventProducer extends EPAgent {
     }
 
     @Override
-    public Collection<IOTerminal> getOutputTerminals() {
-        ArrayList<IOTerminal> outputs = new ArrayList<IOTerminal>();
-        outputs.add(new IOTerminal(_topicName, null));
-        return outputs;
+    public IOTerminal getOutputTerminal() {
+        return new IOTerminal(_topicName, null, this);
     }
 
     @Override

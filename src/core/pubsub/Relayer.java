@@ -4,6 +4,7 @@
  */
 package core.pubsub;
 
+import core.EPAgent;
 import event.EventBean;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -107,17 +108,34 @@ public class Relayer {
     }
 
     //public void callPublish(EventBean evt, String topic) throws Exception {
-    public synchronized void callPublish(EventBean[] evts, String topic) throws Exception {
+    public synchronized void callPublish(EventBean[] evts, EPAgent epu) throws Exception {
         call = new MethodCall(getClass().getMethod("publish", EventBean[].class, String.class));
-        call.setArgs(evts, topic);
-        RspList<Object> rsps = disp.callRemoteMethods(addressTable.get(topic), call, opts);
+        call.setArgs(evts, epu.getOutputTopic());
+        RspList<Object> rsps = disp.callRemoteMethods(addressTable.get(epu.getOutputTopic()), call, opts);
         for (Rsp rsp : rsps.values()) {
 
          if (!rsp.wasUnreachable()) {
          //System.out.println("<< unreachable: " + rsp.getSender());
              long receptionTime = (long)rsp.getValue();
+             
              for(EventBean e:evts){
-                 System.out.println("latency:"+ (receptionTime-e.getHeader().getProductionTime())); 
+                 if (epu.remainingNotification > 0){
+                     epu.meanLatency += (receptionTime-e.getHeader().getProductionTime());
+                     epu.remainingNotification--;
+                 }
+                 else{
+                     float nl = epu.meanLatency/epu.getNumberNotification();
+                     epu.meanLatency =0;
+                     epu.remainingNotification = epu.getNumberNotification();
+                     if(nl>epu.getMaxLatency()){
+                         System.out.println("mean latency@"+epu.getName()+": "+nl+ "; max: "+epu.getMaxLatency()+"; !constraint violation!");
+                     }
+                     else{
+                         System.out.println("mean latency: "+nl+ "; max: "+epu.getMaxLatency()+"; (No constraint violation)");
+                     }
+                     
+                 }
+                 //System.out.println("latency:"+ (receptionTime-e.getHeader().getProductionTime())); 
              }  
          } 
 

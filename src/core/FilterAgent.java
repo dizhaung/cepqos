@@ -32,8 +32,8 @@ public class FilterAgent extends EPAgent {
         this._info = info;
         this._type = "Filter";
         this._receiver = new TopicReceiver(this);
-        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver);
-        outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type);
+        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver, this);
+        outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type, this);
          _outputNotifier = new OQNotifier(outputTerminal, _outputQueue, QoSTuner.NOTIFICATION_PRIORITY);
     }
 
@@ -44,13 +44,10 @@ public class FilterAgent extends EPAgent {
         return inputs;
     }
 
-    @Override
-    public Collection<IOTerminal> getOutputTerminals() {
-        ArrayList<IOTerminal> outputs = new ArrayList<IOTerminal>();
-        outputs.add(outputTerminal);
-        return outputs;
+   @Override
+    public IOTerminal getOutputTerminal() {
+        return outputTerminal;
     }
-
     private boolean notify(EventBean[] evts) {
         //System.out.println("[" + this._info + "] notify event: " + evts);
 

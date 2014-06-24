@@ -23,6 +23,10 @@ public abstract class EPAgent extends Thread {
     protected BoundedPriorityBlockingQueue _outputQueue;
     public int TTL; // ttl value, which respect to the starvation problem...
     protected OQNotifier _outputNotifier;
+    private long _maxLatency=10L;
+    private int _numberNotification=10;
+    public float meanLatency=0;
+    public int remainingNotification =_numberNotification;
 
     // private boolean _process = false;
     public EPAgent() {
@@ -37,7 +41,7 @@ public abstract class EPAgent extends Thread {
 
     public abstract Collection<IOTerminal> getInputTerminals();
 
-    public abstract Collection<IOTerminal> getOutputTerminals();
+    public abstract IOTerminal getOutputTerminal();
 
     public String[] getInputTopics() {
         String[] topics = new String[getInputTerminals().size()];
@@ -49,14 +53,8 @@ public abstract class EPAgent extends Thread {
     }
 
     // public abstract void setInputTopics(String[] inputTopics) ;
-    public String[] getOutputTopics() {
-        String[] topics = new String[getOutputTerminals().size()];
-        
-        short i = 0;
-        for (IOTerminal t : getOutputTerminals()) {
-            topics[i] = t.getTopic();
-        }
-        return topics;
+    public String getOutputTopic() {
+        return getOutputTerminal().getTopic();
     }
 
     // public abstract void setOutputTopic(String outputTopic) ;
@@ -71,9 +69,8 @@ public abstract class EPAgent extends Thread {
             input.open();
         }
 
-        for (IOTerminal output : getOutputTerminals()) {
-            output.open();
-        }
+        getOutputTerminal().open();
+        
         return true;
     }
 
@@ -115,4 +112,21 @@ public abstract class EPAgent extends Thread {
     public String toString() {
         return _type;
     }
+
+    public long getMaxLatency() {
+        return _maxLatency;
+    }
+
+    public void setMaxLatency(long _maxLatency) {
+        this._maxLatency = _maxLatency;
+    }
+
+    public int getNumberNotification() {
+        return _numberNotification;
+    }
+
+    public void setNumberNotification(int _numberNotification) {
+        this._numberNotification = _numberNotification;
+    }
+    
 }

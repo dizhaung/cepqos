@@ -8,6 +8,10 @@ import base.BoundedPriorityBlockingQueue;
 import event.EventBean;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import qosmonitor.QoSTuner;
@@ -22,16 +26,20 @@ public class OQNotifier implements Runnable {
     private BoundedPriorityBlockingQueue _outputQ;
     private IOTerminal _ioTerm;
     private int batch_size = 20;
-    private long timeout = 600000;
-    //ScheduledExecutorService scheduledExecutorService;
-    //ScheduledFuture scheduledFuture = null;
+    //private long timeout = 60000;
+    private volatile long timeCounter;
+    ScheduledExecutorService scheduledExecutorService;
+    ScheduledFuture scheduledFuture = null;
+    Runner r;
+    private EPAgent _agent;
 
-    public OQNotifier(IOTerminal ioTerm, BoundedPriorityBlockingQueue outputQ, short strategy) {
+    public OQNotifier(EPAgent agent, short strategy) {
         _strategy = strategy;
-        _outputQ = outputQ;
-        _ioTerm = ioTerm;
-       // scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-
+        _outputQ = agent.getOutputQueue();
+        _ioTerm = agent.getOutputTerminal();
+        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+        r = new Runner(this);
+        _agent = agent; 
     }
 
     public short getStrategy() {
@@ -53,12 +61,20 @@ public class OQNotifier implements Runnable {
         }
     }
 
-    public long getTimeout() {
-        return timeout;
+    public long getTimeCounter() {
+        return timeCounter;
     }
 
-    public void setTimeout(long timeout) {
-        this.timeout = timeout;
+    public void setTimeCounter(long timeCounter) {
+        this.timeCounter = timeCounter;
+    }
+
+    public IOTerminal getIoTerm() {
+        return _ioTerm;
+    }
+
+    public BoundedPriorityBlockingQueue getOutputQ() {
+        return _outputQ;
     }
 
     @Override
@@ -67,19 +83,21 @@ public class OQNotifier implements Runnable {
             EventBean[] evts = retrieveZeroTTLs();
             if (evts.length > 0) {
                 _ioTerm.send(evts);
+                increaseNotificationCount(evts.length);
             }
             if (_strategy == QoSTuner.NOTIFICATION_PRIORITY) { // default strategy
+                if(scheduledFuture!=null){
+                    scheduledFuture.cancel(true);
+                    scheduledFuture =null;
+                }
                 evts = new EventBean[1];
                 evts[0] = (EventBean) _outputQ.take();
                 evts[0].getHeader().setNotificationTime(System.currentTimeMillis());
                 _ioTerm.send(evts);
+                increaseNotificationCount(evts.length);
             } else if (_strategy == QoSTuner.NOTIFICATION_BATCH) {
-                /*
-                if (scheduledFuture != null) {
-                    scheduledFuture.cancel(false);
-                }
-                * */
-
+                
+                timeCounter = System.currentTimeMillis();
                 if (_outputQ.size() >= batch_size) {
                     List<EventBean> batch = new ArrayList<EventBean>();
                     _outputQ.drainTo(batch, batch_size);
@@ -88,27 +106,16 @@ public class OQNotifier implements Runnable {
                     }
                     evts = (EventBean[]) batch.toArray(new EventBean[0]);
                     _ioTerm.send(evts);
-                } 
-               /* else { // notify after the timeout has elapsed...
-                    scheduledFuture =
-                            scheduledExecutorService.schedule(new Callable() {
-                        public Object call() throws Exception {
-                            List<EventBean> batch = new ArrayList<EventBean>();
-                            _outputQ.drainTo(batch);
-                            for (EventBean evt : batch) {
-                                evt.getHeader().setNotificationTime(System.currentTimeMillis());
-                            }
-                            EventBean[] evs = (EventBean[]) batch.toArray(new EventBean[0]);
-                            _ioTerm.send(evs);
-                            return "(INFO) Notification achieved after timeout (" + timeout + " ms) elapsed: " + evs.length + " events.";
-                        }
-                    },
-                            timeout,
-                            TimeUnit.MILLISECONDS);
-
-                    System.out.println(scheduledFuture.get());
+                    timeCounter = _agent.getQosConstraint().getNotificationTimeout();
+                   increaseNotificationCount(evts.length);
+                } else { // notify after the timeout has elapsed...
+                    if (scheduledFuture==null) {
+                          scheduledFuture
+                            = scheduledExecutorService.scheduleAtFixedRate(r, 0, 1, TimeUnit.MILLISECONDS);
+                    }
+                    
                 }
-                */
+
             }
 
             decreaseAllTTLs();
@@ -138,9 +145,48 @@ public class OQNotifier implements Runnable {
         return evts;
     }
 
+    public void increaseNotificationCount(int num){
+        _agent.numEventNotified+=num;
+    }
+    
     private void decreaseAllTTLs() {
         for (EventBean evt : _outputQ) {
             evt.payload.put("ttl", ((int) (evt.getValue("ttl")) - 1));
+        }
+    }
+}
+
+class Runner implements Runnable {
+
+    private OQNotifier notifier;
+
+    public Runner(OQNotifier not) {
+        notifier = not;
+    }
+
+    public volatile boolean RUNNING = false;
+
+    public void run() {
+
+        RUNNING = true;
+        try {
+            notifier.setTimeCounter(notifier.getTimeCounter() - 1);
+            if (notifier.getTimeCounter() <= 0 && notifier.getOutputQ().size()>0 ) {
+
+                List<EventBean> batch = new ArrayList<EventBean>();
+                notifier.getOutputQ().drainTo(batch);
+                for (EventBean evt : batch) {
+                    evt.getHeader().setNotificationTime(System.currentTimeMillis());
+                }
+                EventBean[] evs = (EventBean[]) batch.toArray(new EventBean[0]);
+                notifier.getIoTerm().send(evs);
+                notifier.increaseNotificationCount(evs.length);
+                System.out.println("Timeout elapsed... "+evs.length+" events notified");
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(Runner.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            RUNNING = false;
         }
     }
 }

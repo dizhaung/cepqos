@@ -26,11 +26,10 @@ public class TopicReceiver implements Subscriber {
         _inputQueue = new BoundedPriorityBlockingQueue(null);
     }
 
-    /*
-     * public LinkedBlockingQueue<EventBean[]> getInputQueue() {
-    return _inputQueue;
+     public TopicReceiver() {
+        _inputQueue = new BoundedPriorityBlockingQueue(null);
     }
-     */
+
     public BoundedPriorityBlockingQueue getInputQueue() {
         return _inputQueue;
     }

@@ -4,11 +4,14 @@
  */
 package core;
 
+import com.google.common.collect.Queues;
+import core.pubsub.Relayer;
 import event.EventBean;
 import hu.akarnokd.reactive4java.base.Subject;
 import hu.akarnokd.reactive4java.util.DefaultObservable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import qosmonitor.QoSTuner;
@@ -26,13 +29,16 @@ public class WindowAgent extends EPAgent {
 
     public WindowAgent(String info, String IDinputTerminal, String IDoutputTerminal) {
         super();
+        this.setName(this.getName()+"@"+Relayer.getInstance().getAddress().toString());
         _sourceStream = new DefaultObservable<EventBean>();
         this._info = info;
         this._type = "Window";
-        this._receiver = new TopicReceiver(this);
-        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver, this);
+        this._receiver[0] = new TopicReceiver();
+        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver[0], this);
         outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type, this);
-        _outputNotifier = new OQNotifier(outputTerminal, _outputQueue, QoSTuner.NOTIFICATION_PRIORITY);
+        _outputNotifier = new OQNotifier(this, QoSTuner.NOTIFICATION_PRIORITY);
+        Queue<EventBean> selected1= Queues.newArrayDeque();
+        _selectedEvents[0] = selected1;
     }
 
     @Override
@@ -54,20 +60,22 @@ public class WindowAgent extends EPAgent {
 
     @Override
     public void process() {
-        while (!_selectedEvents.isEmpty()) {
-            EventBean evt = _selectedEvents.poll();
-            _sourceStream.next(evt);
+        while (!_selectedEvents[0].isEmpty()) {
+            EventBean evt = _selectedEvents[0].poll();
+            evt.payload.put("#time#", System.currentTimeMillis()); // start processing this evt at #time#
+            _sourceStream.next(evt);          
+            numEventProcessed++;
         }
     }
 
     @Override
     public boolean fetch() {
         try {
-            _selectedEvents.add((EventBean) _receiver.getInputQueue().take());
+            _selectedEvents[0].add((EventBean) _receiver[0].getInputQueue().take());
         } catch (InterruptedException ex) {
             Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return !_selectedEvents.isEmpty();
+        return !_selectedEvents[0].isEmpty();
     }
 
 //    @Override

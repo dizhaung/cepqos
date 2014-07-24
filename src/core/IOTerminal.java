@@ -55,6 +55,9 @@ public class IOTerminal {
     }
 
     public void send(EventBean[] e) throws Exception {
+        for(EventBean evt:e){
+            evt.payload.remove("ttl");
+        }
         PubSubService.getInstance().publish(e, _topic); // publish locally
         // compute the latency of evts notified locally?
         Relayer.getInstance().callPublish(e, _agent);  // publish remotely
@@ -62,6 +65,5 @@ public class IOTerminal {
 
     public EPAgent getAgent() {
         return _agent;
-    }
-    
+    } 
 }

@@ -42,6 +42,9 @@ public class EventConsumer extends EPAgent implements Subscriber {
     @Override
     public synchronized void notify(Object event) {
         EventBean[] evts = (EventBean[]) event;
+        for(EventBean evt: evts){
+            evt.getHeader().setReceptionTime(System.currentTimeMillis());           
+        }
         _handler.notify(evts);
     }
 

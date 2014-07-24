@@ -35,7 +35,7 @@ import org.jgroups.util.Util;
  * @author epaln
  */
 public class Relayer {
-    
+
     private Channel channel;
     private RpcDispatcher disp;
     private String props = "udp.xml", CLUSTER = "PubSub";
@@ -44,7 +44,7 @@ public class Relayer {
     private RequestOptions opts;
     private static final int DELAY = 5000;
     private ConcurrentHashMap<String, HashSet<Address>> addressTable;
-    
+
     private Relayer() {
         addressTable = new ConcurrentHashMap<>();
         try {
@@ -53,19 +53,19 @@ public class Relayer {
             MembershipListener l = new MembershipListener() {
                 @Override
                 public void viewAccepted(View view) {
-                    
+
                     System.out.println("** view: " + view);
                 }
-                
+
                 @Override
                 public void suspect(Address suspected_mbr) {
                     System.out.println(" Suspected member: " + suspected_mbr);
                 }
-                
+
                 @Override
                 public void block() {
                 }
-                
+
                 @Override
                 public void unblock() {
                 }
@@ -73,16 +73,16 @@ public class Relayer {
             MessageListener m = new MessageListener() {
                 @Override
                 public void receive(Message msg) {
-                    
+
                 }
-                
+
                 @Override
                 public void getState(OutputStream output) throws Exception {
                     synchronized (addressTable) {
                         Util.objectToStream(addressTable, new DataOutputStream(output));
                     }
                 }
-                
+
                 @Override
                 public void setState(InputStream input) throws Exception {
                     ConcurrentHashMap<String, HashSet<Address>> chm = (ConcurrentHashMap<String, HashSet<Address>>) Util.objectFromStream(new DataInputStream(input));
@@ -102,7 +102,7 @@ public class Relayer {
             Logger.getLogger(Relayer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     public long publish(EventBean[] evts, String topic) {
         return PubSubService.getInstance().publish(evts, topic);
     }
@@ -111,46 +111,31 @@ public class Relayer {
     public synchronized void callPublish(EventBean[] evts, EPAgent epu) throws Exception {
         call = new MethodCall(getClass().getMethod("publish", EventBean[].class, String.class));
         call.setArgs(evts, epu.getOutputTopic());
+        if (addressTable.get(epu.getOutputTopic()) == null) {
+            return;
+        }
         RspList<Object> rsps = disp.callRemoteMethods(addressTable.get(epu.getOutputTopic()), call, opts);
+        boolean ok = false;
         for (Rsp rsp : rsps.values()) {
 
-         if (!rsp.wasUnreachable()) {
-         //System.out.println("<< unreachable: " + rsp.getSender());
-             long receptionTime = (long)rsp.getValue();
-             
-             for(EventBean e:evts){
-                 if (epu.remainingNotification > 0){
-                     epu.meanLatency += (receptionTime-e.getHeader().getProductionTime());
-                     epu.remainingNotification--;
-                 }
-                 else{
-                     float nl = epu.meanLatency/epu.getNumberNotification();
-                     epu.meanLatency =0;
-                     epu.remainingNotification = epu.getNumberNotification();
-                     if(nl>epu.getMaxLatency()){
-                         System.out.println("mean latency@"+epu.getName()+": "+nl+ "; max: "+epu.getMaxLatency()+"; !constraint violation!");
-                     }
-                     else{
-                         System.out.println("mean latency: "+nl+ "; max: "+epu.getMaxLatency()+"; (No constraint violation)");
-                     }
-                     
-                 }
-                 //System.out.println("latency:"+ (receptionTime-e.getHeader().getProductionTime())); 
-             }  
-         } 
+            if (!rsp.wasUnreachable()) {
+                //System.out.println("<< unreachable: " + rsp.getSender());
+                long receptionTime = (long) rsp.getValue();
+                ok = true;
+                for (EventBean e : evts) {
+                    epu.numEventNotifiedNetwork++;
+                    //long timeSpentInOutputQ =e.getHeader().getNotificationTime()- e.getHeader().getProductionTime();
+                    epu.sumLatencies += (receptionTime - e.getHeader().getProductionTime());
+                    //System.out.println("latency:"+ (receptionTime-e.getHeader().getProductionTime())); 
+                }
+            }
+            if (ok) {
+                epu.numAchievedNotifications++;
+            }
+        }
 
-         }
-        /*  RspList<Object> rsps = disp.callRemoteMethods(null, call, opts);
-         for (Rsp rsp : rsps.values()) {
-
-         if (rsp.wasUnreachable()) {
-         System.out.println("<< unreachable: " + rsp.getSender());
-         } 
-
-         }
-         * */
     }
-    
+
     public void advertise(String topic, Address addr) {
         HashSet<Address> addrs = addressTable.get(topic);
         if (addrs == null) {
@@ -161,25 +146,25 @@ public class Relayer {
             addrs.add(addr);
         }
     }
-    
+
     public void callAdvertise(String topic, Address addr) {
         try {
             call = new MethodCall(getClass().getMethod("advertise", String.class, Address.class));
             call.setArgs(topic, addr);
             disp.callRemoteMethods(null, call, opts);
-            
+
         } catch (Exception ex) {
             Logger.getLogger(Relayer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     public static Relayer getInstance() {
         if (_instance == null) {
             _instance = new Relayer();
         }
         return _instance;
     }
-    
+
     public Address getAddress() {
         return channel.getAddress();
     }

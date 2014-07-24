@@ -13,7 +13,7 @@ import core.IOTerminal;
  */
 public class QoSTuner {
     
-    private EPAgent agent;
+    private EPAgent agent; 
     
     public static final short NOTIFICATION_PRIORITY = 0;
     public static final short NOTIFICATION_BATCH = 1;
@@ -23,7 +23,7 @@ public class QoSTuner {
     public static final short QUEUE_NOTIFY = 2; // notify events in the ouptut queue
 
     public QoSTuner() {
-        
+       
     }
 
     public QoSTuner(EPAgent agent) {
@@ -48,6 +48,9 @@ public class QoSTuner {
     public void setOutputQueueCapacity(int capacity){
         if(agent!=null){
             agent.getOutputQueue().setCapacity(capacity);
+            if(agent.getOutputNotifier().getBatch_size()> capacity){ // preference between memory (apply the batch size to be the capacity) and the network occupation(apply the capacity to be the batch size)
+                setNotificationBatchSize(capacity);
+            }
         }
     }
     
@@ -78,7 +81,7 @@ public class QoSTuner {
      public void setNotificationBatchSize(int batch_size, long timeout){
         if(agent!=null){
             agent.getOutputNotifier().setBatch_size(batch_size);
-            agent.getOutputNotifier().setTimeout(timeout);
+            agent.getQosConstraint().setNotificationTimeout(timeout);
         }
     }
 }

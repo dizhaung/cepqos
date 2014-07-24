@@ -34,7 +34,7 @@ public class Sum extends Aggregate {
             sumPriority+= evt.getHeader().getPriority();
         }
         EventBean evt = new EventBean();
-        evt.getHeader().setDetectionTime(System.currentTimeMillis());
+        evt.getHeader().setDetectionTime(evts[0].getHeader().getDetectionTime());
         evt.getHeader().setIsComposite(true);
         evt.getHeader().setProductionTime(System.currentTimeMillis());
         evt.getHeader().setTypeIdentifier("Sum(" + _attribute + ")");

@@ -5,10 +5,10 @@
 package core;
 
 import base.BoundedPriorityBlockingQueue;
-import com.google.common.collect.Queues;
 import event.EventBean;
 import java.util.Collection;
 import java.util.Queue;
+import qosmonitor.QoSConstraint;
 
 /**
  *
@@ -17,26 +17,38 @@ import java.util.Queue;
 public abstract class EPAgent extends Thread {
 
     protected String _type;
-    protected TopicReceiver _receiver;
+    protected TopicReceiver[] _receiver;
     protected String _info;
-    protected Queue<EventBean> _selectedEvents; 
+    protected Queue<EventBean> [] _selectedEvents; 
     protected BoundedPriorityBlockingQueue _outputQueue;
     public int TTL; // ttl value, which respect to the starvation problem...
     protected OQNotifier _outputNotifier;
-    private long _maxLatency=10L;
-    private int _numberNotification=10;
-    public float meanLatency=0;
-    public int remainingNotification =_numberNotification;
+    private QoSConstraint qosConstraint;
+    public volatile float sumLatencies=0;
+    public volatile int numEventNotifiedNetwork=0; // number of events notified over the network via Relayer.callPublish(...)
+    public volatile long numEventNotified=0;       // number of events notified either by Relayer.callPublish(...) or by pub/sub
+    public volatile int numAchievedNotifications=0; // number of calls to Relayer.callPublish(...)
+    public volatile int numEventProcessed =0;
+    public volatile long processingTime=0;
 
-    // private boolean _process = false;
+   
     public EPAgent() {
-        _selectedEvents = Queues.newArrayDeque();
+        _selectedEvents = new Queue[2];
+        _receiver = new TopicReceiver[2];
         _outputQueue = new BoundedPriorityBlockingQueue(this);
         TTL = _outputQueue.getCapacity()*2; // avoiding starvation after two time the capacity of the output queue
     }
 
     public BoundedPriorityBlockingQueue getOutputQueue() {
         return _outputQueue;
+    }
+
+    public int getNumAchievedNotifications() {
+        return numAchievedNotifications;
+    }
+
+    public void setNumAchievedNotifications(int numAchievedNotifications) {
+        this.numAchievedNotifications = numAchievedNotifications;
     }
 
     public abstract Collection<IOTerminal> getInputTerminals();
@@ -52,14 +64,12 @@ public abstract class EPAgent extends Thread {
         return topics;
     }
 
-    // public abstract void setInputTopics(String[] inputTopics) ;
+    
     public String getOutputTopic() {
         return getOutputTerminal().getTopic();
     }
-
-    // public abstract void setOutputTopic(String outputTopic) ;
+  
     public abstract void process();
-   // public abstract void process(EventBean[] evts);
 
     public abstract boolean fetch();
 
@@ -76,6 +86,11 @@ public abstract class EPAgent extends Thread {
 
     @Override
     public void run() {
+//        try {
+//            Thread.sleep(50000);
+//        } catch (InterruptedException ex) {
+//            Logger.getLogger(EPAgent.class.getName()).log(Level.SEVERE, null, ex);
+//        }
         while (true) {
             if (fetch()) {
                 process();
@@ -92,6 +107,15 @@ public abstract class EPAgent extends Thread {
         return _outputNotifier;
     }
 
+    public QoSConstraint getQosConstraint() {
+        return qosConstraint;
+    }
+
+    public void setQosConstraint(QoSConstraint qosConstraint) {
+        this.qosConstraint = qosConstraint;
+    }
+
+    
     public String getType() {
         return _type;
     }
@@ -111,22 +135,6 @@ public abstract class EPAgent extends Thread {
     @Override
     public String toString() {
         return _type;
-    }
-
-    public long getMaxLatency() {
-        return _maxLatency;
-    }
-
-    public void setMaxLatency(long _maxLatency) {
-        this._maxLatency = _maxLatency;
-    }
-
-    public int getNumberNotification() {
-        return _numberNotification;
-    }
-
-    public void setNumberNotification(int _numberNotification) {
-        this._numberNotification = _numberNotification;
     }
     
 }

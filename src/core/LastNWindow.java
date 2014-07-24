@@ -52,7 +52,7 @@ public class LastNWindow extends WindowHandler {
                             evt.payload.put("window", evts);
                             evt.getHeader().setIsComposite(true);
                             evt.getHeader().setProductionTime(System.currentTimeMillis());
-                            evt.getHeader().setDetectionTime(evt.getHeader().getProductionTime());
+                            evt.getHeader().setDetectionTime(evts[0].getHeader().getDetectionTime());
                             evt.getHeader().setTypeIdentifier("Window");
                             evt.getHeader().setProducerID(_wagent.getName());
                             evt.getHeader().setPriority((short)1);

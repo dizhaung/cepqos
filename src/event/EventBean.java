@@ -33,4 +33,10 @@ public class EventBean implements Serializable {
 
         return payload.get(attr);
     }
+
+    @Override
+    public String toString() {
+        return payload.toString(); //To change body of generated methods, choose Tools | Templates.
+    }
+    
 }

@@ -43,22 +43,33 @@ public class TimeBatchWindow extends WindowHandler {
                     @Override
                     public void next(EventBean evt) {
                         res.add(evt);
+
                     }
 
                     @Override
                     public void finish() {
                         if (!res.isEmpty()) {
+                            long time = System.currentTimeMillis();
                             EventBean[] evts;
                             evts = res.toArray(new EventBean[0]);
+                            long ptime =  System.currentTimeMillis() - (long)evts[0].getValue("#time#");
+                             System.out.println(ptime);
+                            _wagent.processingTime += ptime;
+//                            for (EventBean e : evts) {
+//                                long ptime = time - (long) e.getValue("#time#");
+//                                System.out.println(ptime);
+//                                _wagent.processingTime += ptime;
+//                                e.payload.remove("#time#");
+//                            }
                             res.clear();
                             EventBean evt = new EventBean();
                             evt.payload.put("window", evts);
                             evt.getHeader().setIsComposite(true);
                             evt.getHeader().setProductionTime(System.currentTimeMillis());
-                            evt.getHeader().setDetectionTime(evt.getHeader().getProductionTime());
+                            evt.getHeader().setDetectionTime(evts[0].getHeader().getDetectionTime());
                             evt.getHeader().setTypeIdentifier("Window");
-                            evt.getHeader().setProducerID(_wagent.getName());   
-                            evt.getHeader().setPriority((short)1); 
+                            evt.getHeader().setProducerID(_wagent.getName());
+                            evt.getHeader().setPriority((short) 1);
                             evt.payload.put("ttl", _wagent.TTL);
                             _wagent.getOutputQueue().put(evt);
                             _wagent.getOutputNotifier().run();

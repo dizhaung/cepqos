@@ -4,9 +4,12 @@
  */
 package core;
 
+import com.google.common.collect.Queues;
+import core.pubsub.Relayer;
 import event.EventBean;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import qosmonitor.QoSTuner;
@@ -24,12 +27,15 @@ public class AggregatorAgent extends EPAgent {
     public AggregatorAgent(String info, String IDinputTerminal, String IDoutputTerminal) {
         super();
         //this._filter = filter;
+        this.setName(this.getName()+"@"+Relayer.getInstance().getAddress().toString());
         this._info = info;
         this._type = "Aggregator";
-        this._receiver = new TopicReceiver(this);
-        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver, this);
+        this._receiver[0] = new TopicReceiver();
+        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver[0], this);
         outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type, this);
-        _outputNotifier = new OQNotifier(outputTerminal, _outputQueue, QoSTuner.NOTIFICATION_PRIORITY);
+        _outputNotifier = new OQNotifier(this, QoSTuner.NOTIFICATION_PRIORITY);
+        Queue<EventBean> selected1= Queues.newArrayDeque();
+        _selectedEvents[0]=selected1;
     }
 
     public void setAggregator(Aggregate aggregator) {
@@ -56,7 +62,7 @@ public class AggregatorAgent extends EPAgent {
     public void process() {
         //EventBean evt = aggregator.aggregate(_selectedEvents.toArray(new EventBean[0]));
         EventBean[] operands;
-        EventBean evt = _selectedEvents.remove();
+        EventBean evt = _selectedEvents[0].remove();
         if(evt.getHeader().getTypeIdentifier().equals("Window")){
             operands = (EventBean[]) evt.getValue("window");
         }
@@ -66,7 +72,7 @@ public class AggregatorAgent extends EPAgent {
         }
          evt = aggregator.aggregate(operands);
          evt.payload.put("ttl", TTL);
-        _selectedEvents.clear();
+        _selectedEvents[0].clear();
         _outputQueue.put(evt);
         _outputNotifier.run();
     }
@@ -74,11 +80,11 @@ public class AggregatorAgent extends EPAgent {
     @Override
     public boolean fetch() {
        try {
-            _selectedEvents.add((EventBean) _receiver.getInputQueue().take());
+            _selectedEvents[0].add((EventBean) _receiver[0].getInputQueue().take());
         } catch (InterruptedException ex) {
             Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return !_selectedEvents.isEmpty();
+        return !_selectedEvents[0].isEmpty();
     }
 
     /*

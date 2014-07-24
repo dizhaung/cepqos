@@ -5,10 +5,13 @@
 package core;
 
 import base.Func1;
+import com.google.common.collect.Queues;
+import core.pubsub.Relayer;
 import event.EventBean;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import qosmonitor.QoSTuner;
@@ -23,18 +26,19 @@ public class FilterAgent extends EPAgent {
 
     IOTerminal inputTerminal;
     IOTerminal outputTerminal;
-    private final short COUNT = 3; // number of time we try to notify an event 
     List<Func1<EventBean, Boolean>> _filters = new ArrayList<>();
 
     public FilterAgent(String info, String IDinputTerminal, String IDoutputTerminal) {
         super();
-        //this._filter = filter;
+        this.setName(this.getName()+"@"+Relayer.getInstance().getAddress().toString());
         this._info = info;
         this._type = "Filter";
-        this._receiver = new TopicReceiver(this);
-        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver, this);
+        this._receiver[0] = new TopicReceiver();
+        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver[0], this);
         outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type, this);
-         _outputNotifier = new OQNotifier(outputTerminal, _outputQueue, QoSTuner.NOTIFICATION_PRIORITY);
+        _outputNotifier = new OQNotifier(this, QoSTuner.NOTIFICATION_PRIORITY);
+         Queue<EventBean> selected1= Queues.newArrayDeque();
+        _selectedEvents[0]= selected1;
     }
 
     @Override
@@ -44,22 +48,9 @@ public class FilterAgent extends EPAgent {
         return inputs;
     }
 
-   @Override
+    @Override
     public IOTerminal getOutputTerminal() {
         return outputTerminal;
-    }
-    private boolean notify(EventBean[] evts) {
-        //System.out.println("[" + this._info + "] notify event: " + evts);
-
-        try {
-            outputTerminal.send(evts);
-
-        } catch (Exception ex) {
-            Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("Cannot send the eventBean Message :(");
-            return false;
-        }
-        return true;
     }
 
     private void p(String msg) {
@@ -68,11 +59,12 @@ public class FilterAgent extends EPAgent {
 
     @Override
     public void process() {
-        //ArrayList<EventBean> toNotify = new ArrayList<>(); // turn this to an output queue...
-        while (!_selectedEvents.isEmpty()) {
+        while (!_selectedEvents[0].isEmpty()) {
+            // statistics: #events processed, processing time
+            long time = System.currentTimeMillis();           
+            numEventProcessed++;
             boolean pass_filters = true;
-
-            EventBean evt = _selectedEvents.poll();
+            EventBean evt = _selectedEvents[0].poll();
             for (Func1<EventBean, Boolean> _filter : _filters) {
                 if (!_filter.invoke(evt)) {
                     pass_filters = false;
@@ -83,11 +75,11 @@ public class FilterAgent extends EPAgent {
                 evt.getHeader().setProductionTime(System.currentTimeMillis());
                 evt.payload.put("ttl", TTL);
                 _outputQueue.put(evt);
-                //toNotify.add(evt);
-                // notify?
             }
+            time = System.currentTimeMillis()-time;
+            processingTime+=time;
         }
-        
+
         if (!_outputQueue.isEmpty()) {
             _outputNotifier.run();
         }
@@ -96,45 +88,17 @@ public class FilterAgent extends EPAgent {
     @Override
     public boolean fetch() {
         try {
-            _selectedEvents.add((EventBean) _receiver.getInputQueue().take());
+//            if (!_receiver.getInputQueue().isEmpty()) {
+//                System.out.println("input queue size: " + _receiver.getInputQueue().size());
+//            }
+            _selectedEvents[0].add((EventBean) _receiver[0].getInputQueue().take());
         } catch (InterruptedException ex) {
             Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return !_selectedEvents.isEmpty();
+        return !_selectedEvents[0].isEmpty();
     }
 
     public void addFilter(Func1<EventBean, Boolean> filter) {
         this._filters.add(filter);
     }
-
-    /*
-     @Override
-     public void process(EventBean[] evts) {
-     ArrayList<EventBean> toNotify = new ArrayList<>();
-     for (EventBean evt:evts) {
-     boolean pass_filters = true;
-            
-     for (Func1<EventBean, Boolean> _filter : _filters) {
-     if (!_filter.invoke(evt)) {
-     pass_filters = false;
-     break;
-     }
-     }
-     if (pass_filters) {
-     toNotify.add(evt);
-     }
-     }
-     if (!toNotify.isEmpty()) {
-     boolean notified = false;
-     int attempt = 0;
-     do {
-     notified = notify(toNotify.toArray(new EventBean[0]));
-     attempt++;
-     } while (!notified && (attempt != COUNT));
-     if (attempt == COUNT) {
-     p("Notification error: " + toNotify.size() + " events not notified :(");
-     }
-     }
-     }
-     * */
 }

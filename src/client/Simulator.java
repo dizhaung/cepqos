@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Random;
 import objectexplorer.ObjectGraphMeasurer;
 import org.apache.commons.beanutils.BeanUtils;
- 
 
 /**
  *
@@ -31,11 +30,14 @@ public class Simulator<T> extends Thread {
     long passage = 0;
     Class _clazz;
     String attribute;
+    boolean sporadic;
+    volatile boolean stop = false;
 
-    public Simulator(String typeName, String fileName, String[] propertyOrder, Class clazz, long delay) {
+    public Simulator(String typeName, String fileName, String[] propertyOrder, Class clazz, long delay, boolean sporadic) {
         this.typeName = typeName;
         this.delay = delay;
         this.fileName = fileName;
+        this.sporadic = sporadic;
         _clazz = clazz;
         loader = new CSVFileLoader<>(new File(fileName), propertyOrder, clazz);
         realValues = new ArrayList<>();
@@ -44,15 +46,19 @@ public class Simulator<T> extends Thread {
     @Override
     public void run() {
         Random r = new Random();
-        
-        
+
         boolean isSimulating = false;
         producer = new EventProducer(typeName, _clazz);
         //System.out.println("generating events...");
         int i = 1;
         try {
-            Thread.sleep(r.nextInt((int)delay));
-            while (true) {
+            if (sporadic) {
+                Thread.sleep(r.nextInt((int) delay));
+            }
+            else{
+                Thread.sleep(delay);
+            }
+            while (!stop) {
 
                 if (!isSimulating) {
 
@@ -102,7 +108,7 @@ public class Simulator<T> extends Thread {
                         BeanUtils.setProperty(evt, "timestampUTC", timestamp);
                         System.out.println(evt);
                         i++;
-                        
+
                         producer.sendEvent(evt);
                         Thread.sleep(delay);
                     }
@@ -115,6 +121,10 @@ public class Simulator<T> extends Thread {
             ex.printStackTrace();
         }
 
+    }
+
+    public void setStop(boolean stop) {
+        this.stop = stop;
     }
 
     public Simulator simulate(String attribute) {

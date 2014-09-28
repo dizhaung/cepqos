@@ -9,15 +9,23 @@ package qosmonitor;
  * @author epaln
  */
 public class QoSConstraint {
-    private long maxLatency=10L;
+    private long maxLatency=0;
     //public float meanLatency=0;
     private int networkOccupationMax=0; //100 
-    private int queueCapacity= 100;
+    private int queueCapacity= 1000;
     private short fullInputQStrategy;
     private short fullOutputQStrategy;
     private long notificationTimeout = 60000;
-    
+    private long batch_size = 50;
 
+    public long getBatch_size() {
+        return batch_size;
+    }
+
+    public void setBatch_size(long batch_size) {
+        this.batch_size = batch_size;
+    }
+    
     public long getMaxLatency() {
         return maxLatency;
     }

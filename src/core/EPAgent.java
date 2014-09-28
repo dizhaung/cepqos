@@ -8,6 +8,7 @@ import base.BoundedPriorityBlockingQueue;
 import event.EventBean;
 import java.util.Collection;
 import java.util.Queue;
+import log.MyLogger;
 import qosmonitor.QoSConstraint;
 
 /**
@@ -17,7 +18,7 @@ import qosmonitor.QoSConstraint;
 public abstract class EPAgent extends Thread {
 
     protected String _type;
-    protected TopicReceiver[] _receiver;
+    protected TopicReceiver[] _receivers;
     protected String _info;
     protected Queue<EventBean> [] _selectedEvents; 
     protected BoundedPriorityBlockingQueue _outputQueue;
@@ -30,13 +31,16 @@ public abstract class EPAgent extends Thread {
     public volatile int numAchievedNotifications=0; // number of calls to Relayer.callPublish(...)
     public volatile int numEventProcessed =0;
     public volatile long processingTime=0;
+    protected short selectionMode=SelectionMode.MODE_PRIORITY;
+    protected MyLogger logger;
 
    
     public EPAgent() {
         _selectedEvents = new Queue[2];
-        _receiver = new TopicReceiver[2];
+        _receivers = new TopicReceiver[2];
         _outputQueue = new BoundedPriorityBlockingQueue(this);
         TTL = _outputQueue.getCapacity()*2; // avoiding starvation after two time the capacity of the output queue
+        qosConstraint = new QoSConstraint();
     }
 
     public BoundedPriorityBlockingQueue getOutputQueue() {
@@ -62,6 +66,10 @@ public abstract class EPAgent extends Thread {
             topics[i] = t.getTopic();
         }
         return topics;
+    }
+
+    public MyLogger getLogger() {
+        return logger;
     }
 
     
@@ -136,5 +144,14 @@ public abstract class EPAgent extends Thread {
     public String toString() {
         return _type;
     }
+
+    public short getSelectionMode() {
+        return selectionMode;
+    }
+
+    public void setSelectionMode(short selectionMode) {
+        this.selectionMode = selectionMode;
+    }
+    
     
 }

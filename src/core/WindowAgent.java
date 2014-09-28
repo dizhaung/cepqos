@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import log.MyLogger;
 import qosmonitor.QoSTuner;
 
 /**
@@ -29,16 +30,18 @@ public class WindowAgent extends EPAgent {
 
     public WindowAgent(String info, String IDinputTerminal, String IDoutputTerminal) {
         super();
-        this.setName(this.getName()+"@"+Relayer.getInstance().getAddress().toString());
+        this.setName(this.getName() + "@" + Relayer.getInstance().getAddress().toString());
         _sourceStream = new DefaultObservable<EventBean>();
         this._info = info;
         this._type = "Window";
-        this._receiver[0] = new TopicReceiver();
-        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver[0], this);
+        this._receivers[0] = new TopicReceiver();
+        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receivers[0], this);
         outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type, this);
         _outputNotifier = new OQNotifier(this, QoSTuner.NOTIFICATION_PRIORITY);
-        Queue<EventBean> selected1= Queues.newArrayDeque();
+        Queue<EventBean> selected1 = Queues.newArrayDeque();
         _selectedEvents[0] = selected1;
+        logger = new MyLogger("WindowsMeasures", WindowAgent.class.getName());
+        logger.log("Operator, isDropped, Processing Time, InputQ Size, OutputQ Size ");
     }
 
     @Override
@@ -62,8 +65,12 @@ public class WindowAgent extends EPAgent {
     public void process() {
         while (!_selectedEvents[0].isEmpty()) {
             EventBean evt = _selectedEvents[0].poll();
+            long ntime = System.nanoTime();
+
             evt.payload.put("#time#", System.currentTimeMillis()); // start processing this evt at #time#
-            _sourceStream.next(evt);          
+            evt.payload.put("processTime", ntime);
+
+            _sourceStream.next(evt);
             numEventProcessed++;
         }
     }
@@ -71,7 +78,7 @@ public class WindowAgent extends EPAgent {
     @Override
     public boolean fetch() {
         try {
-            _selectedEvents[0].add((EventBean) _receiver[0].getInputQueue().take());
+            _selectedEvents[0].add((EventBean) _receivers[0].getInputQueue().take());
         } catch (InterruptedException ex) {
             Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);
         }

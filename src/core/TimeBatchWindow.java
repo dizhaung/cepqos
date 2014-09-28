@@ -42,8 +42,9 @@ public class TimeBatchWindow extends WindowHandler {
 
                     @Override
                     public void next(EventBean evt) {
+                        long ntime = System.nanoTime();
+                        evt.payload.put("processTime", ntime);
                         res.add(evt);
-
                     }
 
                     @Override
@@ -52,8 +53,8 @@ public class TimeBatchWindow extends WindowHandler {
                             long time = System.currentTimeMillis();
                             EventBean[] evts;
                             evts = res.toArray(new EventBean[0]);
-                            long ptime =  System.currentTimeMillis() - (long)evts[0].getValue("#time#");
-                             System.out.println(ptime);
+                            long ptime = System.currentTimeMillis() - (long) evts[0].getValue("#time#");
+                            //System.out.println(ptime);
                             _wagent.processingTime += ptime;
 //                            for (EventBean e : evts) {
 //                                long ptime = time - (long) e.getValue("#time#");
@@ -63,6 +64,11 @@ public class TimeBatchWindow extends WindowHandler {
 //                            }
                             res.clear();
                             EventBean evt = new EventBean();
+                            long processTime = (long) evts[0].getValue("processTime");
+                            evt.payload.put("processTime", processTime);
+//                            for(EventBean e:evts){
+//                                e.payload.remove("processTime");
+//                            }
                             evt.payload.put("window", evts);
                             evt.getHeader().setIsComposite(true);
                             evt.getHeader().setProductionTime(System.currentTimeMillis());

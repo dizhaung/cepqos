@@ -7,6 +7,8 @@ package event;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -27,8 +29,14 @@ public class EventBean implements Serializable {
     }
 
     public Object getValue(String attr) {
+        
         if (!payload.containsKey(attr)) {
             System.out.println("property named '" + attr + "' is not valid for this type");
+            try {
+                throw new Exception("property named '" + attr + "' is not valid for this type");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
 
         return payload.get(attr);

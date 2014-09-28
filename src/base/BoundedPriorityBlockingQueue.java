@@ -18,7 +18,7 @@ import qosmonitor.QoSTuner;
 public class BoundedPriorityBlockingQueue extends PriorityBlockingQueue<EventBean> {
 
     private int _capacity = 1000;
-    private int numberDefaults = 0;
+    volatile private int numberDefaults = 0;
     
     private short strategy = QoSTuner.QUEUE_REPLACE;
     private EPAgent _agent;
@@ -38,7 +38,7 @@ public class BoundedPriorityBlockingQueue extends PriorityBlockingQueue<EventBea
     public boolean offer(EventBean e) {
         if (this.size() == _capacity) {
             numberDefaults++;
-            System.out.println("full queue: evts "+this.size()+" in "+ _capacity);
+           // System.out.println("full queue: evts "+this.size()+" in "+ _capacity);
             if (strategy == QoSTuner.QUEUE_IGNORE) {                
                 return false;
             }else if(strategy==QoSTuner.QUEUE_NOTIFY){

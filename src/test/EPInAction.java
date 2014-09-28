@@ -6,11 +6,14 @@ package test;
 
 import core.Aggregate;
 import core.AggregatorAgent;
+import core.DisjunctionAgent;
 import core.EPAgent;
 import core.EqualFilter;
 import core.FilterAgent;
 import core.FollowedByAgent;
 import core.GreatherThanFilter;
+import core.LessThanFilter;
+import core.SelectionMode;
 import core.Sum;
 import core.TimeBatchWindow;
 import core.WindowAgent;
@@ -44,26 +47,38 @@ public class EPInAction {
 
         QoSTuner tuner = new QoSTuner();
         tuner.bound(null);
-        /*
+       
         // filter node
         FilterAgent filterA = new FilterAgent("filterA", "MeterEvent", "filterA");
-        //filterA.addFilter(new EqualFilter("meterID", "b1005"));
-        filterA.addFilter(new GreatherThanFilter("realPowerWatts", 1.5d));
+        filterA.addFilter(new EqualFilter("meterID", "b1005"));
+        filterA.addFilter(new LessThanFilter("realPowerWatts", 1.5d));
         EPNetwork.add(filterA);
+   
+        tuner.bound(filterA);
+        tuner.setNotificationStrategy(QoSTuner.NOTIFICATION_PRIORITY);
+        //tuner.setNotificationBatchSize(100, 5000);
         
-        //tuner.bound(filterA);
-        //tuner.setNotificationStrategy(QoSTuner.NOTIFICATION_BATCH);
-        //tuner.setNotificationBatchSize(10, 5000);
+        
+           
+        //QoSConstraint qos = new QoSConstraint();
+        //qos.setMaxLatency(10);
+        
+        //qos.setNetworkOccupationMax(10);
+        //qos.setFullOutputQStrategy(QoSTuner.QUEUE_NOTIFY);
         //tuner.setOutputQueueCapacity(50);
-        //tuner.setFullOututQStrategy(QoSTuner.QUEUE_NOTIFY);
-*/
-        
+       // tuner.setFullOututQStrategy(QoSTuner.QUEUE_NOTIFY);
+     
         // window node
         
         WindowHandler win = new TimeBatchWindow(10, TimeUnit.SECONDS);
         WindowAgent windowA = new WindowAgent("windowA", "MeterEvent", "window");
-        windowA.setWindowHandler(win);
+        windowA.setWindowHandler(win);  
         EPNetwork.add(windowA);
+        
+        // Disjunction node
+        DisjunctionAgent OrA= new DisjunctionAgent("Disjunction", "window", "filterA", "OrAgent");
+        OrA.setSelectionMode(SelectionMode.MODE_CONTINUOUS);
+        EPNetwork.add(OrA);
         
 /*
         // aggregator node
@@ -155,8 +170,8 @@ public class EPInAction {
             epu.start();
         }
         
-        QoSMonitor.getInstance().setEPNetwork(EPNetwork);
-        QoSMonitor.getInstance().setMode(QoSMonitor.MODE_STAT_COLLECT);
-        QoSMonitor.getInstance().startMonitoring();
+//        QoSMonitor.getInstance().setEPNetwork(EPNetwork);
+//        QoSMonitor.getInstance().setMode(QoSMonitor.MODE_STAT_COLLECT);
+//        QoSMonitor.getInstance().startMonitoring();
     }
 }

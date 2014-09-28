@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import log.MyLogger;
 import qosmonitor.QoSTuner;
 
 /**
@@ -33,12 +34,14 @@ public class FilterAgent extends EPAgent {
         this.setName(this.getName()+"@"+Relayer.getInstance().getAddress().toString());
         this._info = info;
         this._type = "Filter";
-        this._receiver[0] = new TopicReceiver();
-        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver[0], this);
+        this._receivers[0] = new TopicReceiver();
+        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receivers[0], this);
         outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type, this);
         _outputNotifier = new OQNotifier(this, QoSTuner.NOTIFICATION_PRIORITY);
          Queue<EventBean> selected1= Queues.newArrayDeque();
         _selectedEvents[0]= selected1;
+        logger = new MyLogger("FilterMeasures", FilterAgent.class.getName());
+        logger.log("Operator, isProduced, Processing Time, InputQ Size, OutputQ Size ");
     }
 
     @Override
@@ -61,10 +64,12 @@ public class FilterAgent extends EPAgent {
     public void process() {
         while (!_selectedEvents[0].isEmpty()) {
             // statistics: #events processed, processing time
-            long time = System.currentTimeMillis();           
+            long time = System.currentTimeMillis();     
+            long ntime = System.nanoTime();
             numEventProcessed++;
             boolean pass_filters = true;
             EventBean evt = _selectedEvents[0].poll();
+            evt.payload.put("processTime", ntime);
             for (Func1<EventBean, Boolean> _filter : _filters) {
                 if (!_filter.invoke(evt)) {
                     pass_filters = false;
@@ -75,8 +80,17 @@ public class FilterAgent extends EPAgent {
                 evt.getHeader().setProductionTime(System.currentTimeMillis());
                 evt.payload.put("ttl", TTL);
                 _outputQueue.put(evt);
+                time = System.currentTimeMillis()-time;
+                //logger.log(this.getInfo()+" ,True, "+time+", "+ this.getInputTerminals().iterator().next().getReceiver().getInputQueue().size()+
+                  //      ", "+ this.getOutputQueue().size());
             }
-            time = System.currentTimeMillis()-time;
+            else{
+                time = System.currentTimeMillis()-time;
+                
+                logger.log(this.getInfo()+", False, "+(System.nanoTime()-ntime)+", "+ this.getInputTerminals().iterator().next().getReceiver().getInputQueue().size()+
+                        ", "+ this.getOutputQueue().size());
+            }
+            
             processingTime+=time;
         }
 
@@ -91,7 +105,7 @@ public class FilterAgent extends EPAgent {
 //            if (!_receiver.getInputQueue().isEmpty()) {
 //                System.out.println("input queue size: " + _receiver.getInputQueue().size());
 //            }
-            _selectedEvents[0].add((EventBean) _receiver[0].getInputQueue().take());
+            _selectedEvents[0].add((EventBean) _receivers[0].getInputQueue().take());
         } catch (InterruptedException ex) {
             Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);
         }

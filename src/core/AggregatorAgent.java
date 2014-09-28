@@ -30,8 +30,8 @@ public class AggregatorAgent extends EPAgent {
         this.setName(this.getName()+"@"+Relayer.getInstance().getAddress().toString());
         this._info = info;
         this._type = "Aggregator";
-        this._receiver[0] = new TopicReceiver();
-        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receiver[0], this);
+        this._receivers[0] = new TopicReceiver();
+        inputTerminal = new IOTerminal(IDinputTerminal, "input channel " + _type, _receivers[0], this);
         outputTerminal = new IOTerminal(IDoutputTerminal, "output channel " + _type, this);
         _outputNotifier = new OQNotifier(this, QoSTuner.NOTIFICATION_PRIORITY);
         Queue<EventBean> selected1= Queues.newArrayDeque();
@@ -80,7 +80,7 @@ public class AggregatorAgent extends EPAgent {
     @Override
     public boolean fetch() {
        try {
-            _selectedEvents[0].add((EventBean) _receiver[0].getInputQueue().take());
+            _selectedEvents[0].add((EventBean) _receivers[0].getInputQueue().take());
         } catch (InterruptedException ex) {
             Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);
         }

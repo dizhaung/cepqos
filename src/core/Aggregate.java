@@ -4,6 +4,7 @@
  */
 package core;
 
+import base.NameValuePair;
 import event.EventBean;
 
 /**
@@ -15,7 +16,7 @@ public abstract class Aggregate {
     protected String _attribute;
     protected String _aggAttribute;
 
-    protected abstract EventBean aggregate(EventBean[] evts);
+    protected abstract NameValuePair aggregate(EventBean[] evts);
 
     public String getAttribute() {
         return _attribute;

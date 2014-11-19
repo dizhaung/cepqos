@@ -4,6 +4,7 @@
  */
 package core;
 
+import base.NameValuePair;
 import event.EventBean;
 
 /**
@@ -23,23 +24,24 @@ public class Sum extends Aggregate {
      * attribute over the specified array of events
      *
      * @param evts
-     * @return an eventbean with a unique attribute carrying the aggregated
-     * value.
+     * @return an Attribute/value pair carrying the aggregated
+     * value and its attribute name
      */
     @Override
-    protected EventBean aggregate(EventBean[] evts) {
-        double sum = 0; int sumPriority =0;
+    protected NameValuePair aggregate(EventBean[] evts) {
+        double sum = 0; //int sumPriority =0;
         for (EventBean evt : evts) {
             sum += Double.parseDouble(evt.getValue(_attribute).toString());
-            sumPriority+= evt.getHeader().getPriority();
+            //sumPriority+= evt.getHeader().getPriority();
         }
-        EventBean evt = new EventBean();
-        evt.getHeader().setDetectionTime(evts[0].getHeader().getDetectionTime());
-        evt.getHeader().setIsComposite(true);
-        evt.getHeader().setProductionTime(System.currentTimeMillis());
-        evt.getHeader().setTypeIdentifier("Sum(" + _attribute + ")");
-        evt.payload.put(_aggAttribute, sum);
-        evt.getHeader().setPriority((short)Math.round(sumPriority/evts.length));
-        return evt;
+        NameValuePair  res = new NameValuePair(_aggAttribute, sum);
+//        EventBean evt = new EventBean();
+//        evt.getHeader().setDetectionTime(evts[0].getHeader().getDetectionTime());
+//        evt.getHeader().setIsComposite(true);
+//        evt.getHeader().setProductionTime(System.currentTimeMillis());
+//        evt.getHeader().setTypeIdentifier("Sum(" + _attribute + ")");
+//        evt.payload.put(_aggAttribute, sum);
+//        evt.getHeader().setPriority((short)Math.round(sumPriority/evts.length));
+        return res;
     }
 }

@@ -63,9 +63,10 @@ public class FilterAgent extends EPAgent {
     @Override
     public void process() {
         while (!_selectedEvents[0].isEmpty()) {
+            
             // statistics: #events processed, processing time
             long time = System.currentTimeMillis();     
-            long ntime = System.nanoTime();
+            long ntime = System.nanoTime(); // to compute the processing time for that cycle
             numEventProcessed++;
             boolean pass_filters = true;
             EventBean evt = _selectedEvents[0].poll();
@@ -78,9 +79,11 @@ public class FilterAgent extends EPAgent {
             }
             if (pass_filters) {
                 evt.getHeader().setProductionTime(System.currentTimeMillis());
+                evt.getHeader().setIsComposite(true);
                 evt.payload.put("ttl", TTL);
                 _outputQueue.put(evt);
                 time = System.currentTimeMillis()-time;
+                numEventProduced++;
                 //logger.log(this.getInfo()+" ,True, "+time+", "+ this.getInputTerminals().iterator().next().getReceiver().getInputQueue().size()+
                   //      ", "+ this.getOutputQueue().size());
             }
@@ -95,16 +98,13 @@ public class FilterAgent extends EPAgent {
         }
 
         if (!_outputQueue.isEmpty()) {
-            _outputNotifier.run();
+            getExecutorService().execute(getOutputNotifier());
         }
     }
 
     @Override
     public boolean fetch() {
         try {
-//            if (!_receiver.getInputQueue().isEmpty()) {
-//                System.out.println("input queue size: " + _receiver.getInputQueue().size());
-//            }
             _selectedEvents[0].add((EventBean) _receivers[0].getInputQueue().take());
         } catch (InterruptedException ex) {
             Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);

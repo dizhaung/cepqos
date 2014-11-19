@@ -34,41 +34,34 @@ public class TimeBatchWindow extends WindowHandler {
         Observable<Observable<EventBean>> windows = Reactive.window(_wagent._sourceStream, _timespan, _unit);
 
         windows.register(new ObserverAdapter<Observable<EventBean>>() {
+            
             @Override
             public void next(Observable<EventBean> aWindow) {
-
+                
                 aWindow.register(new ObserverAdapter<EventBean>() {
                     Queue<EventBean> res = Queues.newArrayDeque();
 
                     @Override
                     public void next(EventBean evt) {
-                        long ntime = System.nanoTime();
-                        evt.payload.put("processTime", ntime);
                         res.add(evt);
                     }
 
                     @Override
                     public void finish() {
-                        if (!res.isEmpty()) {
-                            long time = System.currentTimeMillis();
+                        
+                        if (!res.isEmpty()) {                           
                             EventBean[] evts;
-                            evts = res.toArray(new EventBean[0]);
-                            long ptime = System.currentTimeMillis() - (long) evts[0].getValue("#time#");
-                            //System.out.println(ptime);
-                            _wagent.processingTime += ptime;
-//                            for (EventBean e : evts) {
-//                                long ptime = time - (long) e.getValue("#time#");
-//                                System.out.println(ptime);
-//                                _wagent.processingTime += ptime;
-//                                e.payload.remove("#time#");
-//                            }
-                            res.clear();
                             EventBean evt = new EventBean();
+                            evts = res.toArray(new EventBean[0]);
                             long processTime = (long) evts[0].getValue("processTime");
                             evt.payload.put("processTime", processTime);
-//                            for(EventBean e:evts){
-//                                e.payload.remove("processTime");
-//                            }
+                            long ptime = System.currentTimeMillis() - (long) evts[0].getValue("#time#");                            
+                            _wagent.processingTime += ptime;
+                            for (EventBean e : evts) {
+                                e.payload.remove("#time#");
+                                e.payload.remove("processTime");
+                            }
+                            res.clear();                                                                                
                             evt.payload.put("window", evts);
                             evt.getHeader().setIsComposite(true);
                             evt.getHeader().setProductionTime(System.currentTimeMillis());
@@ -78,9 +71,8 @@ public class TimeBatchWindow extends WindowHandler {
                             evt.getHeader().setPriority((short) 1);
                             evt.payload.put("ttl", _wagent.TTL);
                             _wagent.getOutputQueue().put(evt);
-                            _wagent.getOutputNotifier().run();
-                            //notifier = new Notifier(evts, _wagent.outputTerminal);
-                            //notifier.start();
+                            _wagent.numEventProduced++;
+                            _wagent.getExecutorService().execute(_wagent.getOutputNotifier());
                         }
                     }
                 });

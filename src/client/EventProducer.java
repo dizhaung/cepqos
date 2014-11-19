@@ -31,6 +31,7 @@ public class EventProducer extends EPAgent {
 
     private Class _clazz;
     private String _topicName;
+    private IOTerminal output;
 
     public EventProducer(String typeName, Class clazz) {
         _clazz = clazz;
@@ -39,6 +40,7 @@ public class EventProducer extends EPAgent {
             declareEventType(typeName, clazz);
         }
         _type = "Producer";
+        output = new IOTerminal(_topicName, null, this);
     }
 
     //private boolean declareEventType(String typeName, Class clazz) throws EventTypeException {
@@ -88,8 +90,7 @@ public class EventProducer extends EPAgent {
                 
                          
                 EventBean[] evts = {evt};
-                PubSubService.getInstance().publish(evts, _topicName); // publish locally
-                Relayer.getInstance().callPublish(evts, this);  // publish remotely                
+                output.send(evts);
                 return true;
             } else {
                 throw new EventTypeException("The underlying event type has not been registered");
@@ -112,7 +113,7 @@ public class EventProducer extends EPAgent {
 
     @Override
     public IOTerminal getOutputTerminal() {
-        return new IOTerminal(_topicName, null, this);
+        return output;
     }
 
     @Override

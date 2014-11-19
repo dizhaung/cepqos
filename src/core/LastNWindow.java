@@ -33,6 +33,7 @@ public class LastNWindow extends WindowHandler {
         windows.register(new ObserverAdapter<Observable<EventBean>>() {
             @Override
             public void next(Observable<EventBean> aWindow) {
+                
 
                 aWindow.register(new ObserverAdapter<EventBean>() {
                     Queue<EventBean> res = Queues.newArrayDeque();
@@ -47,8 +48,18 @@ public class LastNWindow extends WindowHandler {
                         if (!res.isEmpty()) {
                             EventBean[] evts;
                             evts = res.toArray(new EventBean[0]);
+                            long ptime = System.currentTimeMillis() - (long) evts[0].getValue("#time#");
+                            _wagent.processingTime += ptime;
+                            for (EventBean e : evts) {
+                                e.payload.remove("#time#");
+                            }
                             res.clear();
                             EventBean evt = new EventBean();
+                            long processTime = (long) evts[0].getValue("processTime");
+                            evt.payload.put("processTime", processTime);
+                            for(EventBean e:evts){
+                                e.payload.remove("processTime");
+                            }
                             evt.payload.put("window", evts);
                             evt.getHeader().setIsComposite(true);
                             evt.getHeader().setProductionTime(System.currentTimeMillis());
@@ -58,6 +69,7 @@ public class LastNWindow extends WindowHandler {
                             evt.getHeader().setPriority((short)1);
                             evt.payload.put("ttl", _wagent.TTL);
                             _wagent.getOutputQueue().put(evt);
+                            _wagent.numEventProduced++;
                             _wagent.getOutputNotifier().run();
                             
                             //notifier = new Notifier(evts, _wagent.outputTerminal);

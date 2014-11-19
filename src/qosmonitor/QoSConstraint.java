@@ -9,13 +9,13 @@ package qosmonitor;
  * @author epaln
  */
 public class QoSConstraint {
-    private long maxLatency=0;
+    private long maxLatency=0; // en millisec
     //public float meanLatency=0;
     private int networkOccupationMax=0; //100 
     private int queueCapacity= 1000;
     private short fullInputQStrategy;
     private short fullOutputQStrategy;
-    private long notificationTimeout = 60000;
+    private long notificationTimeout = 3600000; // 1h
     private long batch_size = 50;
 
     public long getBatch_size() {

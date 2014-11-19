@@ -43,7 +43,7 @@ public class DisjunctionAgent extends EPAgent {
         _selectedEvents[0] = selectedL;
         Queue<EventBean> selectedR = Queues.newArrayDeque();
         _selectedEvents[1] = selectedR;
-        logger = new MyLogger("FilterMeasures", FilterAgent.class.getName());
+        logger = new MyLogger("DisjunctionMeasures", DisjunctionAgent.class.getName());
         logger.log("Operator, isProduced, Processing Time, InputQ Size, OutputQ Size ");
     }
 
@@ -63,33 +63,36 @@ public class DisjunctionAgent extends EPAgent {
     @Override
     public void process() {
         EventBean[] lValues, rValues;
-        EventBean evtL = _selectedEvents[0].poll();
-        EventBean evtR = _selectedEvents[1].poll();
+        // statistics: #events processed, processing time
+        long time = System.currentTimeMillis();
+        long ntime = System.nanoTime(); // to compute the processing time for that cycle
+
+        EventBean evtL = _selectedEvents[0].peek();
+        EventBean evtR = _selectedEvents[1].peek();
         lValues = rValues = new EventBean[0];
         if (evtL != null) {
             if (evtL.getHeader().getTypeIdentifier().equals("Window")) {
                 lValues = (EventBean[]) evtL.getValue("window");
             } else {
-                lValues = new EventBean[1];
-                lValues[0] = evtL;
+                lValues = _selectedEvents[0].toArray(new EventBean[0]);
             }
         }
         if (evtR != null) {
             if (evtR.getHeader().getTypeIdentifier().equals("Window")) {
                 rValues = (EventBean[]) evtR.getValue("window");
             } else {
-                rValues = new EventBean[1];
-                rValues[0] = evtR;
+                rValues = _selectedEvents[1].toArray(new EventBean[0]);
             }
         }
-        
+
         if (lValues.length != 0 && rValues.length != 0) {
+            
             // many event instances can match... the selection mode should clearly define the event to select
             switch (selectionMode) {
                 case SelectionMode.MODE_CONTINUOUS: {
                     for (EventBean l : lValues) {
                         for (EventBean r : rValues) {
-                            long ntime = System.nanoTime();
+                           // long ntime = System.nanoTime();
                             EventBean ec = new EventBean();
                             ec.getHeader().setDetectionTime(Math.min(r.getHeader().getDetectionTime(), l.getHeader().getDetectionTime()));
                             ec.getHeader().setPriority((short) Math.max(l.getHeader().getPriority(), r.getHeader().getPriority()));
@@ -102,12 +105,14 @@ public class DisjunctionAgent extends EPAgent {
                             ec.payload.put("ttl", TTL);
                             ec.payload.put("processTime", ntime);
                             _outputQueue.put(ec);
+                            numEventProduced++;
+                            getExecutorService().execute(getOutputNotifier());
                         }
                     }
                 }
                 break;
                 case SelectionMode.MODE_CHRONOLOGIC: {
-                    long ntime = System.nanoTime();
+                    //long ntime = System.nanoTime();
                     Arrays.sort(lValues, 0, lValues.length - 1, new EventComparator2());
                     Arrays.sort(lValues, 0, rValues.length - 1, new EventComparator2());
                     EventBean ec = new EventBean();
@@ -122,12 +127,14 @@ public class DisjunctionAgent extends EPAgent {
                     ec.payload.put("ttl", TTL);
                     ec.payload.put("processTime", ntime);
                     _outputQueue.put(ec);
+                    numEventProduced++;
+                    getExecutorService().execute(getOutputNotifier());
 
                 }
                 break;
 
                 case SelectionMode.MODE_PRIORITY: {
-                    long ntime = System.nanoTime();
+                    //long ntime = System.nanoTime();
                     EventBean ec = new EventBean();
                     ec.getHeader().setDetectionTime(Math.min(rValues[0].getHeader().getDetectionTime(), lValues[0].getHeader().getDetectionTime()));
                     ec.getHeader().setPriority((short) Math.max(lValues[0].getHeader().getPriority(), rValues[0].getHeader().getPriority()));
@@ -140,12 +147,13 @@ public class DisjunctionAgent extends EPAgent {
                     ec.payload.put("ttl", TTL);
                     ec.payload.put("processTime", ntime);
                     _outputQueue.put(ec);
-
+                    numEventProduced++;
+                    getExecutorService().execute(getOutputNotifier());
                 }
                 break;
 
                 default: { /// mode recent
-                    long ntime = System.nanoTime();
+                    //long ntime = System.nanoTime();
                     Arrays.sort(lValues, 0, lValues.length - 1, new EventComparator2());
                     Arrays.sort(lValues, 0, rValues.length - 1, new EventComparator2());
                     EventBean ec = new EventBean();
@@ -160,9 +168,25 @@ public class DisjunctionAgent extends EPAgent {
                     ec.payload.put("ttl", TTL);
                     ec.payload.put("processTime", ntime);
                     _outputQueue.put(ec);
-
+                    numEventProduced++;
+                    getExecutorService().execute(getOutputNotifier());
                 }
                 break;
+            }
+            // removes the processed events from the selected events
+            if (evtL != null) {
+                if (evtL.getHeader().getTypeIdentifier().equals("Window")) {
+                    _selectedEvents[0].remove(evtL);
+                } else {
+                    _selectedEvents[0].clear();
+                }
+            }
+            if (evtR != null) {
+                if (evtR.getHeader().getTypeIdentifier().equals("Window")) {
+                    _selectedEvents[1].remove(evtR);
+                } else {
+                    _selectedEvents[1].clear();
+                }
             }
 
         } else {
@@ -172,7 +196,7 @@ public class DisjunctionAgent extends EPAgent {
                 switch (selectionMode) {
                     case SelectionMode.MODE_CONTINUOUS: {
                         for (EventBean l : lValues) {
-                            long ntime = System.nanoTime();
+                            
                             EventBean ec = new EventBean();
                             ec.getHeader().setDetectionTime(l.getHeader().getDetectionTime());
                             ec.getHeader().setPriority(l.getHeader().getPriority());
@@ -184,11 +208,13 @@ public class DisjunctionAgent extends EPAgent {
                             ec.payload.put("ttl", TTL);
                             ec.payload.put("processTime", ntime);
                             _outputQueue.put(ec);
+                            numEventProduced++;
+                            getExecutorService().execute(getOutputNotifier());
                         }
                     }
                     break;
                     case SelectionMode.MODE_CHRONOLOGIC: {
-                        long ntime = System.nanoTime();
+                      
                         Arrays.sort(lValues, 0, lValues.length - 1, new EventComparator2());
                         EventBean ec = new EventBean();
                         ec.getHeader().setDetectionTime(lValues[0].getHeader().getDetectionTime());
@@ -201,11 +227,13 @@ public class DisjunctionAgent extends EPAgent {
                         ec.payload.put("ttl", TTL);
                         ec.payload.put("processTime", ntime);
                         _outputQueue.put(ec);
+                        numEventProduced++;
+                        getExecutorService().execute(getOutputNotifier());
                     }
                     break;
 
                     case SelectionMode.MODE_PRIORITY: {
-                        long ntime = System.nanoTime();
+                        
                         EventBean ec = new EventBean();
                         ec.getHeader().setDetectionTime(lValues[0].getHeader().getDetectionTime());
                         ec.getHeader().setPriority(lValues[0].getHeader().getPriority());
@@ -217,12 +245,13 @@ public class DisjunctionAgent extends EPAgent {
                         ec.payload.put("ttl", TTL);
                         ec.payload.put("processTime", ntime);
                         _outputQueue.put(ec);
-
+                        numEventProduced++;
+                        getExecutorService().execute(getOutputNotifier());
                     }
                     break;
 
                     default: { /// mode recent
-                        long ntime = System.nanoTime();
+                        
                         Arrays.sort(lValues, 0, lValues.length - 1, new EventComparator2());
                         EventBean ec = new EventBean();
                         ec.getHeader().setDetectionTime(lValues[lValues.length - 1].getHeader().getDetectionTime());
@@ -235,8 +264,18 @@ public class DisjunctionAgent extends EPAgent {
                         ec.payload.put("ttl", TTL);
                         ec.payload.put("processTime", ntime);
                         _outputQueue.put(ec);
+                        numEventProduced++;
+                        getExecutorService().execute(getOutputNotifier());
                     }
                     break;
+                }
+                // removes the processed events from the selected events
+                if (evtL != null) {
+                    if (evtL.getHeader().getTypeIdentifier().equals("Window")) {
+                        _selectedEvents[0].remove(evtL);
+                    } else {
+                        _selectedEvents[0].clear();
+                    }
                 }
 
             }
@@ -247,7 +286,7 @@ public class DisjunctionAgent extends EPAgent {
                 switch (selectionMode) {
                     case SelectionMode.MODE_CONTINUOUS: {
                         for (EventBean r : rValues) {
-                            long ntime = System.nanoTime();
+                            
                             EventBean ec = new EventBean();
                             ec.getHeader().setDetectionTime(r.getHeader().getDetectionTime());
                             ec.getHeader().setPriority(r.getHeader().getPriority());
@@ -259,11 +298,13 @@ public class DisjunctionAgent extends EPAgent {
                             ec.payload.put("ttl", TTL);
                             ec.payload.put("processTime", ntime);
                             _outputQueue.put(ec);
+                            numEventProduced++;
+                            getExecutorService().execute(getOutputNotifier());
                         }
                     }
                     break;
                     case SelectionMode.MODE_CHRONOLOGIC: {
-                        long ntime = System.nanoTime();
+                        
                         Arrays.sort(rValues, 0, rValues.length - 1, new EventComparator2());
                         EventBean ec = new EventBean();
                         ec.getHeader().setDetectionTime(rValues[0].getHeader().getDetectionTime());
@@ -276,11 +317,13 @@ public class DisjunctionAgent extends EPAgent {
                         ec.payload.put("ttl", TTL);
                         ec.payload.put("processTime", ntime);
                         _outputQueue.put(ec);
+                        numEventProduced++;
+                        getExecutorService().execute(getOutputNotifier());
                     }
                     break;
 
                     case SelectionMode.MODE_PRIORITY: {
-                        long ntime = System.nanoTime();
+                        
                         EventBean ec = new EventBean();
                         ec.getHeader().setDetectionTime(rValues[0].getHeader().getDetectionTime());
                         ec.getHeader().setPriority(rValues[0].getHeader().getPriority());
@@ -292,12 +335,13 @@ public class DisjunctionAgent extends EPAgent {
                         ec.payload.put("ttl", TTL);
                         ec.payload.put("processTime", ntime);
                         _outputQueue.put(ec);
-
+                        numEventProduced++;
+                        getExecutorService().execute(getOutputNotifier());
                     }
                     break;
 
                     default: { /// mode recent
-                        long ntime = System.nanoTime();
+                        
                         Arrays.sort(rValues, 0, rValues.length - 1, new EventComparator2());
                         EventBean ec = new EventBean();
                         ec.getHeader().setDetectionTime(rValues[rValues.length - 1].getHeader().getDetectionTime());
@@ -310,16 +354,30 @@ public class DisjunctionAgent extends EPAgent {
                         ec.payload.put("ttl", TTL);
                         ec.payload.put("processTime", ntime);
                         _outputQueue.put(ec);
+                        numEventProduced++;
+                        getExecutorService().execute(getOutputNotifier());
                     }
                     break;
                 }
-
+                // removes the processed events from the selected events
+                if (evtR != null) {
+                    if (evtR.getHeader().getTypeIdentifier().equals("Window")) {
+                        _selectedEvents[1].remove(evtR);
+                    } else {
+                        _selectedEvents[1].clear();
+                    }
+                }
             }
 
-        }      
-        if (!_outputQueue.isEmpty()) {
-            _outputNotifier.run();
         }
+
+        // update statistics: processing time, number event processed
+        time = System.currentTimeMillis()-time;
+        numEventProcessed+= (lValues.length+rValues.length);
+        processingTime+=time;
+        // clear the processed events
+        _selectedEvents[0].clear();
+        _selectedEvents[1].clear();
     }
 
     @Override

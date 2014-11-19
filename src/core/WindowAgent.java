@@ -41,7 +41,7 @@ public class WindowAgent extends EPAgent {
         Queue<EventBean> selected1 = Queues.newArrayDeque();
         _selectedEvents[0] = selected1;
         logger = new MyLogger("WindowsMeasures", WindowAgent.class.getName());
-        logger.log("Operator, isDropped, Processing Time, InputQ Size, OutputQ Size ");
+        logger.log("Operator, isProduced, Processing Time, InputQ Size, OutputQ Size ");
     }
 
     @Override

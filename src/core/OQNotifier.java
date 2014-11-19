@@ -138,9 +138,7 @@ public class OQNotifier implements Runnable {
                         scheduledFuture
                                 = scheduledExecutorService.scheduleAtFixedRate(r, 0, 1, TimeUnit.MILLISECONDS);
                     }
-
                 }
-
             }
 
             decreaseAllTTLs();

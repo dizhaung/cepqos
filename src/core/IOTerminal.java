@@ -33,7 +33,6 @@ public class IOTerminal {
     public TopicReceiver getReceiver() {
         return _receiver;
     }
-
     
     public boolean open() {
 
@@ -57,6 +56,7 @@ public class IOTerminal {
     public void send(EventBean[] e) throws Exception {
         for(EventBean evt:e){
             evt.payload.remove("ttl");
+            evt.getHeader().setNotificationTime(System.currentTimeMillis());
         }
         PubSubService.getInstance().publish(e, _topic); // publish locally
         // compute the latency of evts notified locally?

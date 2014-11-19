@@ -11,11 +11,12 @@ package qosmonitor;
  * @author epaln
  */
 public class QoSMeasures {
-    private float observedMeanLatency;
+    private long observedMeanLatency;
     private int observedNumberNotifications;
     private int numEventProcessed =0;
     private  long processingTime=0;
     private long numEventProduced =0;
+    private long observedmeanNetworkLatency;
 
     public int getNumEventProcessed() {
         return numEventProcessed;
@@ -44,13 +45,15 @@ public class QoSMeasures {
     public QoSMeasures() {
     }
 
-    public float getObservedMeanLatency() {
+    public long getObservedMeanLatency() {
         return observedMeanLatency;
     }
 
-    public void setObservedMeanLatency(float observedMeanLatency) {
+    public void setObservedMeanLatency(long observedMeanLatency) {
         this.observedMeanLatency = observedMeanLatency;
     }
+
+    
 
     public int getObservedNumberNotifications() {
         return observedNumberNotifications;
@@ -60,4 +63,13 @@ public class QoSMeasures {
         this.observedNumberNotifications = observedNumberNotifications;
     }
 
+    public long getObservedmeanNetworkLatency() {
+        return observedmeanNetworkLatency;
+    }
+
+    public void setObservedmeanNetworkLatency(long observedmeanNetworkLatency) {
+        this.observedmeanNetworkLatency = observedmeanNetworkLatency;
+    }
+
+    
 }

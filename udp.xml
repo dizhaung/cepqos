@@ -8,15 +8,14 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.3.xsd">
-    <UDP
-         bind_addr="127.0.0.1"
-         bind_interface="lo0"         
+    <UDP    
+         bind_interface="en0"         
          bind_port="45588"
          tos="8"
-         ucast_recv_buf_size="5M"
-         ucast_send_buf_size="640K"
-         mcast_recv_buf_size="5M"
-         mcast_send_buf_size="640K"
+         ucast_recv_buf_size="131K"
+         ucast_send_buf_size="131K"
+         mcast_recv_buf_size="131K"
+         mcast_send_buf_size="131K"
          loopback="true"
          max_bundle_size="64K"
          max_bundle_timeout="30"
@@ -46,20 +45,20 @@
          oob_thread_pool.queue_enabled="true"
          oob_thread_pool.queue_max_size="100"
          oob_thread_pool.rejection_policy="discard"/>
-
+<!--
      <TCPPING timeout="2000"
       initial_hosts="127.0.0.1[45588]"
             num_initial_members="3"/>            
              
-      <!--       
+             
       <TCPPING timeout="2000"
       initial_hosts="10.188.12.227[45588]"
             num_initial_members="3"/>
-           
+      -->      
     <TCPPING timeout="2000"
       initial_hosts="victoire.imag.fr[45588]"
             num_initial_members="3"/> 
-    -->
+   
     
     <MERGE2 max_interval="30000"
             min_interval="10000"/>

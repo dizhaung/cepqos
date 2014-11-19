@@ -8,11 +8,15 @@ package core;
 import com.google.common.collect.Queues;
 import core.pubsub.Relayer;
 import event.EventBean;
+import event.EventComparator;
+import event.EventComparator2;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import log.MyLogger;
 import qosmonitor.QoSTuner;
 
 /**
@@ -27,7 +31,7 @@ public class FollowedByAgent extends EPAgent {
 
     public FollowedByAgent(String info, String IDinputTerminalL, String IDinputTerminalR, String IDoutputTerminal) {
         super();
-        this.setName(this.getName()+"@"+Relayer.getInstance().getAddress().toString());
+        this.setName(this.getName() + "@" + Relayer.getInstance().getAddress().toString());
         this._info = info;
         this._type = "FollowedBy";
         this._receivers[0] = new TopicReceiver();
@@ -40,6 +44,8 @@ public class FollowedByAgent extends EPAgent {
         _selectedEvents[0] = selectedL;
         Queue<EventBean> selectedR = Queues.newArrayDeque();
         _selectedEvents[1] = selectedR;
+        logger = new MyLogger("FollowedByMeasures", FollowedByAgent.class.getName());
+        logger.log("Operator, isProduced, Processing Time, InputQ Size, OutputQ Size ");
     }
 
     @Override
@@ -57,54 +63,114 @@ public class FollowedByAgent extends EPAgent {
 
     @Override
     public void process() {
-        EventBean[] lValues, rValues; 
-        EventBean evtL= _selectedEvents[0].poll();
-        EventBean evtR = _selectedEvents[1].poll();
-        if(evtL.getHeader().getTypeIdentifier().equals("Window")){
-            lValues = (EventBean[])evtL.getValue("window");
-        }
-        else {
-            lValues = new EventBean[1];
-            lValues[0] =evtL;
-        }
-        if(evtR.getHeader().getTypeIdentifier().equals("Window")){
-            rValues = (EventBean[])evtR.getValue("window");
-        }
-        else {
-            rValues = new EventBean[1];
-            rValues[0] =evtR;
-        }
-        for(EventBean l: lValues){
-            for(EventBean r: rValues){
-                if(l.getHeader().getDetectionTime()<r.getHeader().getDetectionTime()){
-                    EventBean ec = new EventBean();
-                    ec.getHeader().setDetectionTime(r.getHeader().getDetectionTime());
-                    ec.getHeader().setPriority((short)Math.max(l.getHeader().getPriority(), r.getHeader().getPriority()));
-                    ec.getHeader().setIsComposite(true);
-                    ec.getHeader().setProductionTime(System.currentTimeMillis());
-                    ec.getHeader().setProducerID(this.getName());
-                    ec.getHeader().setTypeIdentifier("FollowedBy");
-                    ec.payload.put("before", l);
-                    ec.payload.put("after", r);
-                    ec.payload.put("ttl", TTL);
-                    _outputQueue.put(ec);
-                }
+        EventBean[] lValues, rValues;
+        // statistics: #events processed, processing time
+        long time = System.currentTimeMillis();
+        long ntime = System.nanoTime(); // to compute the processing time for that cycle
+        EventBean evtL = _selectedEvents[0].peek();
+        EventBean evtR = _selectedEvents[1].peek();
+        lValues = rValues = new EventBean[0];
+        if (evtL != null) {
+            if (evtL.getHeader().getTypeIdentifier().equals("Window")) {
+                lValues = (EventBean[]) evtL.getValue("window");
+            } else {
+                lValues = _selectedEvents[0].toArray(new EventBean[0]);
             }
         }
-        if (!_outputQueue.isEmpty()) {
-            _outputNotifier.run();
+        if (evtR != null) {
+            if (evtR.getHeader().getTypeIdentifier().equals("Window")) {
+                rValues = (EventBean[]) evtR.getValue("window");
+            } else {
+                rValues = _selectedEvents[1].toArray(new EventBean[0]);
+            }
+        }
+        if (lValues.length != 0 && rValues.length != 0) {
+            ArrayList<EventBean> produced = new ArrayList<>();
+            for (EventBean l : lValues) {
+                for (EventBean r : rValues) {
+                    if (l.getHeader().getDetectionTime() < r.getHeader().getDetectionTime()) {
+                        EventBean ec = new EventBean();
+                        ec.getHeader().setDetectionTime(r.getHeader().getDetectionTime());
+                        ec.getHeader().setPriority((short) Math.max(l.getHeader().getPriority(), r.getHeader().getPriority()));
+                        ec.getHeader().setIsComposite(true);
+                        ec.getHeader().setProductionTime(System.currentTimeMillis());
+                        ec.getHeader().setProducerID(this.getName());
+                        ec.getHeader().setTypeIdentifier("FollowedBy");
+                        ec.payload.put("before", l);
+                        ec.payload.put("after", r);
+                        ec.payload.put("ttl", TTL);
+                        ec.payload.put("processTime", ntime);
+                        produced.add(ec);
+                    }
+                }
+
+            }
+            switch (selectionMode) {
+                case SelectionMode.MODE_CONTINUOUS: {
+                    for (EventBean e : produced) {
+                        _outputQueue.put(e);
+                        numEventProduced++;
+                        getExecutorService().execute(getOutputNotifier());
+                    }
+                }
+                break;
+
+                case SelectionMode.MODE_CHRONOLOGIC: {
+                    _outputQueue.put(produced.get(0));
+                    numEventProduced++;
+                    getExecutorService().execute(getOutputNotifier());
+                }
+                break;
+                case SelectionMode.MODE_PRIORITY: {
+                    EventBean[] prod = produced.toArray(new EventBean[0]);
+                    Arrays.sort(prod, new EventComparator());
+                    _outputQueue.put(prod[0]);
+                    numEventProduced++;
+                    getExecutorService().execute(getOutputNotifier());
+                }
+                break;
+                default: { // mode recent
+                    _outputQueue.put(produced.get(produced.size() - 1));
+                    numEventProduced++;
+                    getExecutorService().execute(getOutputNotifier());
+                }
+                break;
+            }
+            // update statistics: number event processed
+             numEventProcessed+= (lValues.length+rValues.length);
+            // removes the processed events from the selected events
+            if (evtL != null) {
+                if (evtL.getHeader().getTypeIdentifier().equals("Window")) {
+                    _selectedEvents[0].remove(evtL);
+                } else {
+                    _selectedEvents[0].clear();
+                }
+            }
+            if (evtR != null) {
+                if (evtR.getHeader().getTypeIdentifier().equals("Window")) {
+                    _selectedEvents[1].remove(evtR);
+                } else {
+                    _selectedEvents[1].clear();
+                }
+            }
+            // update statistics: processing time
+            processingTime+=time;
         }
     }
 
     @Override
     public boolean fetch() {
         try {
-            _selectedEvents[0].add((EventBean) _receivers[0].getInputQueue().take());
-            _selectedEvents[1].add((EventBean) _receivers[1].getInputQueue().take());
+            if (_receivers[0].getInputQueue().size() != 0) {
+                _selectedEvents[0].add((EventBean) _receivers[0].getInputQueue().take());
+            }
+            if (_receivers[1].getInputQueue().size() != 0) {
+                _selectedEvents[1].add((EventBean) _receivers[1].getInputQueue().take());
+            }
         } catch (InterruptedException ex) {
-            Logger.getLogger(FilterAgent.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(DisjunctionAgent.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return (!_selectedEvents[0].isEmpty()) && (!_selectedEvents[1].isEmpty());
+        return (!_selectedEvents[0].isEmpty()) || (!_selectedEvents[1].isEmpty());
     }
 
 }

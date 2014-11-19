@@ -4,14 +4,17 @@
  */
 package core;
 
+import base.NameValuePair;
 import com.google.common.collect.Queues;
 import core.pubsub.Relayer;
 import event.EventBean;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import log.MyLogger;
 import qosmonitor.QoSTuner;
 
 /**
@@ -22,7 +25,7 @@ public class AggregatorAgent extends EPAgent {
 
     IOTerminal inputTerminal;
     IOTerminal outputTerminal;
-    Aggregate aggregator = null;
+    List<Aggregate> aggregators = new ArrayList<>();
 
     public AggregatorAgent(String info, String IDinputTerminal, String IDoutputTerminal) {
         super();
@@ -36,14 +39,16 @@ public class AggregatorAgent extends EPAgent {
         _outputNotifier = new OQNotifier(this, QoSTuner.NOTIFICATION_PRIORITY);
         Queue<EventBean> selected1= Queues.newArrayDeque();
         _selectedEvents[0]=selected1;
+        logger = new MyLogger("AggregatorMeasures", AggregatorAgent.class.getName());
+        logger.log("Operator, isProduced, Processing Time, InputQ Size, OutputQ Size ");
     }
 
-    public void setAggregator(Aggregate aggregator) {
-        this.aggregator = aggregator;
+    public void addAggregator(Aggregate aggregator) {
+        this.aggregators.add(aggregator);
     }
 
-    public Aggregate getAggregator() {
-        return aggregator;
+    public List<Aggregate> getAggregators() {
+        return aggregators;
     }
 
     @Override
@@ -62,6 +67,9 @@ public class AggregatorAgent extends EPAgent {
     public void process() {
         //EventBean evt = aggregator.aggregate(_selectedEvents.toArray(new EventBean[0]));
         EventBean[] operands;
+        //start processing time
+        long time = System.currentTimeMillis(); 
+        long ntime = System.nanoTime();
         EventBean evt = _selectedEvents[0].remove();
         if(evt.getHeader().getTypeIdentifier().equals("Window")){
             operands = (EventBean[]) evt.getValue("window");
@@ -70,11 +78,32 @@ public class AggregatorAgent extends EPAgent {
              operands = new EventBean[1];
              operands[0]=evt;
         }
-         evt = aggregator.aggregate(operands);
+        // update the number of event processed by this EPU
+        numEventProcessed+=operands.length;
+         int sumPriority = 0;     
+        for (EventBean e : operands) {
+            sumPriority+= e.getHeader().getPriority();
+        }
+        EventBean ec = new EventBean();
+        ec.getHeader().setDetectionTime(operands[0].getHeader().getDetectionTime());
+        ec.getHeader().setIsComposite(true);
+        ec.getHeader().setProductionTime(System.currentTimeMillis());
+        ec.getHeader().setTypeIdentifier("Aggregate");
+        evt.payload.put("processTime", ntime);
+        ec.getHeader().setPriority((short)Math.round(sumPriority/operands.length));
+        for (Aggregate aggregator: aggregators ){
+            NameValuePair res = aggregator.aggregate(operands);
+            ec.payload.put(res.getAttribute(), res.getValue());
+        }
+         
          evt.payload.put("ttl", TTL);
         _selectedEvents[0].clear();
         _outputQueue.put(evt);
-        _outputNotifier.run();
+        numEventProduced++;
+        // update the processing time of this EPU
+        time = System.currentTimeMillis()-time;
+        processingTime+=time;
+       getExecutorService().execute(getOutputNotifier());
     }
 
     @Override

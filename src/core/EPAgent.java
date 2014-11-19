@@ -8,6 +8,8 @@ import base.BoundedPriorityBlockingQueue;
 import event.EventBean;
 import java.util.Collection;
 import java.util.Queue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import log.MyLogger;
 import qosmonitor.QoSConstraint;
 
@@ -26,13 +28,16 @@ public abstract class EPAgent extends Thread {
     protected OQNotifier _outputNotifier;
     private QoSConstraint qosConstraint;
     public volatile float sumLatencies=0;
+    public volatile float sumNetworkLatencies=0;
     public volatile int numEventNotifiedNetwork=0; // number of events notified over the network via Relayer.callPublish(...)
     public volatile long numEventNotified=0;       // number of events notified either by Relayer.callPublish(...) or by pub/sub
     public volatile int numAchievedNotifications=0; // number of calls to Relayer.callPublish(...)
     public volatile int numEventProcessed =0;
+    public volatile int numEventProduced =0;
     public volatile long processingTime=0;
     protected short selectionMode=SelectionMode.MODE_PRIORITY;
     protected MyLogger logger;
+    protected ExecutorService executorService;
 
    
     public EPAgent() {
@@ -41,10 +46,15 @@ public abstract class EPAgent extends Thread {
         _outputQueue = new BoundedPriorityBlockingQueue(this);
         TTL = _outputQueue.getCapacity()*2; // avoiding starvation after two time the capacity of the output queue
         qosConstraint = new QoSConstraint();
+        executorService = Executors.newCachedThreadPool();
     }
 
     public BoundedPriorityBlockingQueue getOutputQueue() {
         return _outputQueue;
+    }
+
+    public ExecutorService getExecutorService() {
+        return executorService;
     }
 
     public int getNumAchievedNotifications() {
@@ -94,18 +104,12 @@ public abstract class EPAgent extends Thread {
 
     @Override
     public void run() {
-//        try {
-//            Thread.sleep(50000);
-//        } catch (InterruptedException ex) {
-//            Logger.getLogger(EPAgent.class.getName()).log(Level.SEVERE, null, ex);
-//        }
         while (true) {
             if (fetch()) {
                 process();
             }
         }
     }
-
     
     public int getTTL() {
         return TTL;
@@ -153,5 +157,8 @@ public abstract class EPAgent extends Thread {
         this.selectionMode = selectionMode;
     }
     
-    
+    public void shutdonwn(){
+        getExecutorService().shutdown();
+        this.interrupt();
+    }
 }

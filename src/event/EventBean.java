@@ -5,7 +5,6 @@
 package event;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,22 +28,31 @@ public class EventBean implements Serializable {
     }
 
     public Object getValue(String attr) {
-        
-        if (!payload.containsKey(attr)) {
-            System.out.println("property named '" + attr + "' is not valid for this type");
-            try {
-                throw new Exception("property named '" + attr + "' is not valid for this type");
-            } catch (Exception ex) {
-                ex.printStackTrace();
+        String[] attrs = attr.split("\\.");
+        if (attrs.length == 1) {
+            if (!payload.containsKey(attrs[0])) {
+                System.out.println("property named '" + attrs[0] + "' is not valid for this type");
+                try {
+                    throw new Exception("property named '" + attrs[0] + "' is not valid for this type");
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                return null;
+            }
+            return payload.get(attr);
+        } else {
+            EventBean e = (EventBean) payload.get(attrs[0]);
+            if (e != null) {
+                return e.getValue(attr.substring(attrs[0].length() + 1));
+            } else {
+                return null;
             }
         }
-
-        return payload.get(attr);
     }
 
     @Override
     public String toString() {
         return payload.toString(); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
 }

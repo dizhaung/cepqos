@@ -109,6 +109,7 @@ public class Relayer {
 
     //public void callPublish(EventBean evt, String topic) throws Exception {
     public synchronized void callPublish(EventBean[] evts, EPAgent epu) throws Exception {
+
         call = new MethodCall(getClass().getMethod("publish", EventBean[].class, String.class));
         call.setArgs(evts, epu.getOutputTopic());
         if (addressTable.get(epu.getOutputTopic()) == null) {
@@ -117,17 +118,21 @@ public class Relayer {
         RspList<Object> rsps = disp.callRemoteMethods(addressTable.get(epu.getOutputTopic()), call, opts);
         boolean ok = false;
         for (Rsp rsp : rsps.values()) {
-
-            if (!rsp.wasUnreachable()) {
-                //System.out.println("<< unreachable: " + rsp.getSender());
-                long receptionTime = (long) rsp.getValue();
-                ok = true;
-                for (EventBean e : evts) {
-                    epu.numEventNotifiedNetwork++;
-                    //long timeSpentInOutputQ =e.getHeader().getNotificationTime()- e.getHeader().getProductionTime();
-                    epu.sumLatencies += (receptionTime - e.getHeader().getProductionTime());
-                    //System.out.println("latency:"+ (receptionTime-e.getHeader().getProductionTime())); 
+            try {
+                if (!rsp.wasUnreachable()) {
+                    //System.out.println("<< unreachable: " + rsp.getSender());
+                    long receptionTime = (long) rsp.getValue();
+                    ok = true;
+                    for (EventBean e : evts) {
+                        epu.numEventNotifiedNetwork++;
+                        //long timeSpentInOutputQ =e.getHeader().getNotificationTime()- e.getHeader().getProductionTime();
+                        epu.sumLatencies += (receptionTime - e.getHeader().getProductionTime());
+                        epu.sumNetworkLatencies+= (receptionTime - e.getHeader().getNotificationTime());
+                        //System.out.println("latency:"+ (receptionTime-e.getHeader().getProductionTime())); 
+                    }
                 }
+            } catch (NullPointerException ex) {
+
             }
             if (ok) {
                 epu.numAchievedNotifications++;
